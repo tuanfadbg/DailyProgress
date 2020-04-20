@@ -1,4 +1,4 @@
-package com.tuanfadbg.progress.database;
+package com.tuanfadbg.progress.database.item;
 
 import androidx.room.Dao;
 import androidx.room.Delete;
@@ -13,8 +13,11 @@ public interface ItemDao {
     @Query("SELECT * FROM Item ORDER BY uid DESC")
     List<Item> getAll();
 
+    @Query("SELECT * FROM Item WHERE tag IN (:tagId) ORDER BY uid DESC")
+    List<Item> getAllByTag(int tagId);
+
     @Query("SELECT * FROM Item ORDER BY uid DESC limit 1")
-    List<Item> getNewestQRCode();
+    List<Item> getNewest();
 
     @Query("SELECT * FROM Item WHERE uid IN (:userIds)")
     List<Item> loadAllByIds(int[] userIds);

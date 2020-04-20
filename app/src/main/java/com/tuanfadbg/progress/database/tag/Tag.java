@@ -1,4 +1,4 @@
-package com.tuanfadbg.progress.database;
+package com.tuanfadbg.progress.database.tag;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
@@ -9,10 +9,9 @@ import java.util.Date;
 @Entity(tableName = "Tag")
 public class Tag {
 
-    public Tag(int uid, String name, long createAt) {
-        this.uid = uid;
+    public Tag(String name) {
         this.name = name;
-        this.createAt = createAt;
+        createAt = new Date().getTime();
     }
 
     @PrimaryKey(autoGenerate = true)

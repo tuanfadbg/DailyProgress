@@ -1,4 +1,4 @@
-package com.tuanfadbg.progress.database;
+package com.tuanfadbg.progress.database.item;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
@@ -29,6 +29,9 @@ public class Item {
 
     @ColumnInfo(name = "file")
     public String file;
+
+    @ColumnInfo(name = "isLove")
+    public String isLove;
 
     @ColumnInfo(name = "tag")
     public Integer tag;

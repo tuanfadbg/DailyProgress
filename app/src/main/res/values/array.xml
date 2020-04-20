@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="style_list" >
+        <item>No text</item>
+        <item>Date blow</item>
+        <item>White outline</item>
+        <item>Instagram</item>
+    </array>
+</resources>

@@ -1,19 +1,19 @@
 package com.tuanfadbg.progress.database;
 
-public class Data {
-    private Item item;
+public class Data<C> {
+    private C item;
     private OnUpdateDatabase onUpdateDatabase;
 
     public Data(OnUpdateDatabase onUpdateDatabase) {
         this.onUpdateDatabase = onUpdateDatabase;
     }
 
-    public Data(Item item, OnUpdateDatabase onUpdateDatabase) {
+    public Data(C item, OnUpdateDatabase onUpdateDatabase) {
         this.item = item;
         this.onUpdateDatabase = onUpdateDatabase;
     }
 
-    public Item getItem() {
+    public C getItem() {
         return item;
     }
 

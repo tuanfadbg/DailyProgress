@@ -1,8 +1,9 @@
-package com.tuanfadbg.progress.ui;
+package com.tuanfadbg.progress.ui.main_list;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,8 +13,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.tuanfadbg.progress.R;
-import com.tuanfadbg.progress.database.Item;
+import com.tuanfadbg.progress.database.item.Item;
+import com.tuanfadbg.progress.ui.main_grid.OnItemClickListener;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,20 +27,22 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-public class DataAdapter extends RecyclerView.Adapter<DataAdapter.ViewHolder> {
+public class ItemListAdapter extends RecyclerView.Adapter<ItemListAdapter.ViewHolder> {
 
     private Context context;
     private List<Item> datas;
+    private OnItemClickListener onItemClickListener;
 
-    public DataAdapter(Context context, List<Item> datas) {
+    public ItemListAdapter(Context context, List<Item> datas, OnItemClickListener onItemClickListener) {
         this.context = context;
         this.datas = datas;
+        this.onItemClickListener = onItemClickListener;
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_data_grid, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_in_item_timeline_list, parent, false);
         return new ViewHolder(view);
     }
 
@@ -62,6 +67,11 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.ViewHolder> {
         notifyDataSetChanged();
     }
 
+    public void removeItem(Item item) {
+        this.datas.remove(item);
+        notifyDataSetChanged();
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         ImageView imageView;
@@ -75,34 +85,14 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.ViewHolder> {
 
         public void setData(int position) {
             Item item = datas.get(position);
-            long diffInMillies = Math.abs(new Date().getTime() - item.createAt);
-            long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-            if (diff < 1) {
-                SimpleDateFormat sdf = new SimpleDateFormat("dd", Locale.ENGLISH);
-                String currentDate = sdf.format(new Date());
-                String createAt = sdf.format(new Date(item.createAt));
-                if (currentDate.equals(createAt))
-                    diff = 0;
-                else diff = 1;
+            if (TextUtils.isEmpty(item.title))
+                txtTime.setVisibility(View.GONE);
+            else {
+                txtTime.setVisibility(View.VISIBLE);
             }
-
-            if (diff == 0)
-                txtTime.setText(R.string.today);
-            else
-                txtTime.setText(String.format(Locale.US, "%d days ago", diff));
-
-            loadImageFromStorage(item.file, imageView);
+            txtTime.setText(item.title);
+            Glide.with(context).load(new File(item.file)).into(imageView);
+            itemView.setOnClickListener(v -> onItemClickListener.onClick(item));
         }
-    }
-
-    private void loadImageFromStorage(String path, ImageView img) {
-        try {
-            File f = new File(path);
-            Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
-            img.setImageBitmap(b);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
     }
 }

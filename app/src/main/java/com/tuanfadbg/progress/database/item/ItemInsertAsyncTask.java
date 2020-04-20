@@ -1,9 +1,13 @@
-package com.tuanfadbg.progress.database;
+package com.tuanfadbg.progress.database.item;
 
 import android.content.Context;
 import android.os.AsyncTask;
 
 import androidx.room.Room;
+
+import com.tuanfadbg.progress.database.AppDatabase;
+import com.tuanfadbg.progress.database.Data;
+import com.tuanfadbg.progress.database.OnUpdateDatabase;
 
 import java.lang.ref.WeakReference;
 
@@ -23,7 +27,7 @@ public class ItemInsertAsyncTask extends AsyncTask<Data, Void, Boolean> {
                 .fallbackToDestructiveMigration()
                 .build();
 
-        db.itemDao().insertAll(params[0].getItem());
+        db.itemDao().insertAll((Item) params[0].getItem());
         return true;
     }
 

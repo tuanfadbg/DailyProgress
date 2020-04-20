@@ -1,23 +1,18 @@
 package com.tuanfadbg.progress.ui;
 
-import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.chip.Chip;
@@ -25,21 +20,24 @@ import com.google.android.material.chip.ChipGroup;
 import com.tuanfadbg.progress.BuildConfig;
 import com.tuanfadbg.progress.R;
 import com.tuanfadbg.progress.database.Data;
-import com.tuanfadbg.progress.database.Item;
-import com.tuanfadbg.progress.database.ItemInsertAsyncTask;
-import com.tuanfadbg.progress.database.ItemSelectAsyncTask;
 import com.tuanfadbg.progress.database.OnUpdateDatabase;
-import com.tuanfadbg.progress.utils.Constants;
+import com.tuanfadbg.progress.database.item.Item;
+import com.tuanfadbg.progress.database.item.ItemSelectAsyncTask;
+import com.tuanfadbg.progress.database.tag.Tag;
+import com.tuanfadbg.progress.database.tag.TagInsertAsyncTask;
+import com.tuanfadbg.progress.database.tag.TagSelectAllAsyncTask;
+import com.tuanfadbg.progress.ui.image_note.ImageNoteDialog;
+import com.tuanfadbg.progress.ui.image_view.ImageViewDialog;
+import com.tuanfadbg.progress.ui.main_grid.DataGridAdapter;
+import com.tuanfadbg.progress.ui.main_list.TimelineListAdapter;
+import com.tuanfadbg.progress.ui.side_by_side.SideBySideDialog;
 import com.tuanfadbg.progress.utils.takephoto.TakePhotoCallback;
 import com.tuanfadbg.progress.utils.takephoto.TakePhotoUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.List;
+
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -49,9 +47,12 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView rcvData;
     ChipGroup chipGroup;
 
-    com.tuanfadbg.progress.utils.takephoto.TakePhotoUtils takePhotoUtils;
+    DataGridAdapter dataGridAdapter;
+    TimelineListAdapter timelineListAdapter;
 
-    DataAdapter dataAdapter;
+    com.tuanfadbg.progress.utils.takephoto.TakePhotoUtils takePhotoUtils;
+    int currentTagSelected;
+    private List<Item> datas;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,123 +76,164 @@ public class MainActivity extends AppCompatActivity {
 
     private void setListener() {
         imgGrid.setOnClickListener(v -> {
+            if (imgGrid.isSelected())
+                return;
             imgGrid.setSelected(true);
             imgList.setSelected(false);
+            setLayoutGrid();
         });
 
         imgList.setOnClickListener(v -> {
+            if (imgList.isSelected())
+                return;
             imgGrid.setSelected(false);
             imgList.setSelected(true);
+            setLayoutList();
         });
 
-        findViewById(R.id.img_camera).setOnClickListener(v -> takePhotoUtils.takePhoto().setListener(new TakePhotoCallback() {
-            @Override
-            public void onSuccess(Bitmap bitmap, int width, int height) {
-                saveImage(bitmap);
-            }
+        findViewById(R.id.img_camera).setOnClickListener(v -> {
 
-            @Override
-            public void onFail() {
+            takePhotoUtils.takePhoto().toPortrait().setListener(new TakePhotoCallback() {
+                @Override
+                public void onSuccess(Bitmap bitmap, int width, int height) {
+                    ImageNoteDialog imageNoteDialog = new ImageNoteDialog();
+                    imageNoteDialog.setBitmap(bitmap);
+                    imageNoteDialog.setCurrentTagId(currentTagSelected);
+                    imageNoteDialog.setOnAddNewItemListener((hasNewTag, tagId) -> {
+                        updateNewItem(hasNewTag, tagId);
+                    });
+                    imageNoteDialog.show(getSupportFragmentManager(), ImageNoteDialog.class.getSimpleName());
+                }
 
+                @Override
+                public void onFail() {
+
+                }
+            });
+        });
+
+        findViewById(R.id.img_compare).setOnClickListener(v -> {
+            if (datas == null) {
+                SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(this, SweetAlertDialog.WARNING_TYPE);
+                if (chipGroup.getVisibility() == View.VISIBLE)
+                    sweetAlertDialog.setTitle(R.string.error_no_image_on_tag);
+                else
+                    sweetAlertDialog.setTitle(R.string.error_no_image);
+                sweetAlertDialog.setConfirmText(getString(R.string.dialog_ok));
+                sweetAlertDialog.show();
+                return;
             }
-        }));
+            SideBySideDialog sideBySideDialog = new SideBySideDialog();
+            sideBySideDialog.setItems(datas);
+            sideBySideDialog.show(getSupportFragmentManager(), SideBySideDialog.class.getSimpleName());
+        });
     }
 
-    private void saveImage(Bitmap bitmap) {
-        saveToInternalStorage(bitmap);
-    }
-
-    private void saveToInternalStorage(Bitmap bitmapImage) {
-        ContextWrapper cw = new ContextWrapper(getApplicationContext());
-        File directory = cw.getDir("data", Context.MODE_PRIVATE);
-        // Create imageDir
-        File mypath = new File(directory, "image_" + new Date().getTime() + ".jpg");
-
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(mypath);
-            bitmapImage.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
+    private void updateNewItem(boolean hasNewTag, int tagId) {
+        if (hasNewTag) {
+            TagSelectAllAsyncTask tagSelectAsyncTask = new TagSelectAllAsyncTask(MainActivity.this);
+            tagSelectAsyncTask.execute(tags -> {
+                fillDataTag(tags);
+                ((Chip) findViewById(tagId)).setChecked(true);
+            });
+        } else {
             try {
-                fos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+                ((Chip) findViewById(tagId)).setChecked(true);
+            } catch (Exception e) { // no item found
+                selectTag(currentTagSelected);
             }
         }
-
-        ItemInsertAsyncTask itemInsertAsyncTask = new ItemInsertAsyncTask(this);
-        Item item = new Item("hello", mypath.getAbsolutePath(), Constants.TAG_DEFAULT, true);
-        itemInsertAsyncTask.execute(new Data(item, new OnUpdateDatabase() {
-            @Override
-            public void onSuccess() {
-                ItemSelectAsyncTask itemSelectAsyncTask
-                        = new ItemSelectAsyncTask(MainActivity.this, dataAdapter, imgEmpty);
-                itemSelectAsyncTask.execute(false);
-            }
-
-            @Override
-            public void onFail() {
-
-            }
-        }));
     }
 
-    private void loadImageFromStorage(String path) {
-        try {
-            File f = new File(path);
-            Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
-//            ImageView img = (ImageView) findViewById(R.id.imgPicker);
-//            img.setImageBitmap(b);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
 
     private void setData() {
+        TagSelectAllAsyncTask tagSelectAsyncTask = new TagSelectAllAsyncTask(this);
+        tagSelectAsyncTask.execute(tags -> {
+            if (tags == null)
+                tags = new ArrayList<>();
+            if (tags.size() == 0) {
+                TagInsertAsyncTask tagInsertAsyncTask = new TagInsertAsyncTask(MainActivity.this);
+                Tag tag = new Tag(getString(R.string.default_text));
+                tagInsertAsyncTask.execute(new Data(tag, new OnUpdateDatabase() {
+                    @Override
+                    public void onSuccess() {
+                        TagSelectAllAsyncTask tagSelectAsyncTask1 = new TagSelectAllAsyncTask(MainActivity.this);
+                        tagSelectAsyncTask1.execute(tags1 -> {
+                            fillDataTag(tags1);
+                        });
+                    }
+
+                    @Override
+                    public void onFail() {
+                        Toast.makeText(MainActivity.this, getString(R.string.unknown_error), Toast.LENGTH_LONG).show();
+                    }
+                }));
+            } else {
+                fillDataTag(tags);
+            }
+        });
+
+        chipGroup.setOnCheckedChangeListener((group, checkedId) -> selectTag(checkedId));
+
+        dataGridAdapter = new DataGridAdapter(this, new ArrayList<>(), this::viewImage);
+        timelineListAdapter = new TimelineListAdapter(this, new ArrayList<>(), this::viewImage);
+
         imgGrid.performClick();
+    }
 
-        chipGroup.setOnCheckedChangeListener(new ChipGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(ChipGroup group, @IdRes int checkedId) {
-                // Handle the checked chip change.
-            }
-        });
+    private void setLayoutList() {
+        rcvData.setAdapter(timelineListAdapter);
+        timelineListAdapter.setData(datas);
+        rcvData.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+    }
 
-
-
-        Chip chip = new Chip(this, null, R.attr.CustomChipChoiceStyle);
-        chip.setText("hello");
-        chipGroup.addView(chip, 0);
-
-//        chipGroup.addCh
-
-        dataAdapter = new DataAdapter(this, new ArrayList<>());
-        rcvData.setAdapter(dataAdapter);
+    private void setLayoutGrid() {
+        rcvData.setAdapter(dataGridAdapter);
+        dataGridAdapter.setData(datas);
         rcvData.setLayoutManager(new GridLayoutManager(this, 3));
-        rcvData.addItemDecoration(new RecyclerView.ItemDecoration() {
-            @Override
-            public void getItemOffsets(@NonNull Rect outRect, @NonNull View view,
-                                       @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-                int space = 16;
-                outRect.left = space;
-                outRect.right = space;
-                outRect.bottom = space;
-                outRect.top = space;
+    }
 
-//                // Add top margin only for the first item to avoid double space between items
-//                if (parent.getChildLayoutPosition(view) == 0) {
-//                    outRect.top = space;
-//                } else {
-//                    outRect.top = 0;
-//                }
+    private void viewImage(Item item) {
+        ImageViewDialog imageViewDialog = new ImageViewDialog();
+        imageViewDialog.setItem(item);
+        imageViewDialog.setOnItemDeletedListener(item1 -> dataGridAdapter.removeItem(item1));
+        imageViewDialog.show(getSupportFragmentManager(), ImageViewDialog.class.getSimpleName());
+    }
+
+    private void fillDataTag(List<Tag> tags) {
+        if (tags.size() <= 1) {
+            chipGroup.setVisibility(View.GONE);
+            selectTag(tags.get(0).uid);
+        } else {
+            chipGroup.setVisibility(View.VISIBLE);
+            chipGroup.removeAllViews();
+            for (int i = 0; i < tags.size(); i++) {
+                Chip chip = new Chip(MainActivity.this, null, R.attr.CustomChipChoiceStyle);
+                chip.setId(tags.get(i).uid);
+                chip.setText(tags.get(i).name);
+                chipGroup.addView(chip, 0);
             }
-        });
-        ItemSelectAsyncTask itemSelectAsyncTask
-                = new ItemSelectAsyncTask(this, dataAdapter, imgEmpty);
-        itemSelectAsyncTask.execute(true);
+            ((Chip) chipGroup.getChildAt(0)).setChecked(true);
+        }
+    }
 
+    private void selectTag(int tagId) {
+        currentTagSelected = tagId;
+        ItemSelectAsyncTask itemSelectAsyncTask
+                = new ItemSelectAsyncTask(this);
+        itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, tagId, datas -> {
+            this.datas = datas;
+            if (imgGrid.isSelected()) {
+                dataGridAdapter.setData(datas);
+            } else {
+                timelineListAdapter.setData(datas);
+            }
+            if (datas.size() > 0) {
+                imgEmpty.setVisibility(View.GONE);
+            } else {
+                imgEmpty.setVisibility(View.VISIBLE);
+            }
+        }));
     }
 
     @Override
