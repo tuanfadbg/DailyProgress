@@ -8,14 +8,26 @@ import java.util.Date;
 
 @Entity(tableName = "Item")
 public class Item {
+//
+//    public Item(String title, String file, Integer tag, boolean isPrivate) {
+//        this.title = title;
+//        this.des = "";
+//        this.file = file;
+//        this.tag = tag;
+//        this.isPrivate = isPrivate;
+//        this.createAt = new Date().getTime();
+//    }
 
-    public Item(String title, String file, Integer tag, boolean isPrivate) {
+    public Item(String title, String file, Integer tag, boolean isPrivate, long createAt) {
         this.title = title;
         this.des = "";
         this.file = file;
         this.tag = tag;
         this.isPrivate = isPrivate;
-        this.createAt = new Date().getTime();
+        if (createAt != 0)
+            this.createAt = createAt;
+        else
+            this.createAt = new Date().getTime();
     }
 
     @PrimaryKey(autoGenerate = true)

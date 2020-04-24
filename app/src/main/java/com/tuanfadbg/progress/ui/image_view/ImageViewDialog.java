@@ -1,43 +1,35 @@
 package com.tuanfadbg.progress.ui.image_view;
 
 import android.app.Dialog;
-import android.content.Context;
-import android.content.ContextWrapper;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.content.Intent;
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
 
 import com.bumptech.glide.Glide;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
 import com.ortiz.touchview.TouchImageView;
 import com.tuanfadbg.progress.R;
-import com.tuanfadbg.progress.database.Data;
-import com.tuanfadbg.progress.database.OnUpdateDatabase;
 import com.tuanfadbg.progress.database.item.Item;
 import com.tuanfadbg.progress.database.item.ItemDeteleAsyncTask;
-import com.tuanfadbg.progress.database.item.ItemInsertAsyncTask;
-import com.tuanfadbg.progress.database.tag.Tag;
-import com.tuanfadbg.progress.database.tag.TagSelectAllAsyncTask;
-import com.tuanfadbg.progress.ui.add_tag.AddTagDialog;
+import com.tuanfadbg.progress.ui.side_by_side.SideBySideDialog;
+import com.tuanfadbg.progress.utils.FileManager;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
@@ -47,6 +39,7 @@ public class ImageViewDialog extends DialogFragment {
     private Item item;
     private ConstraintLayout ctBottom;
     private OnItemDeletedListener onItemDeletedListener;
+
     @Override
     public void onStart() {
         super.onStart();
@@ -86,13 +79,71 @@ public class ImageViewDialog extends DialogFragment {
                 ctBottom.setVisibility(View.VISIBLE);
         });
 
+        view.findViewById(R.id.img_compare).setOnClickListener(v -> compare());
         view.findViewById(R.id.img_back).setOnClickListener(v -> dismiss());
-        view.findViewById(R.id.img_love).setOnClickListener(v -> love());
+        view.findViewById(R.id.img_share).setOnClickListener(v -> share());
         view.findViewById(R.id.img_delete).setOnClickListener(v -> delete());
     }
 
-    private void love() {
+    private void compare() {
+        SideBySideDialog sideBySideDialog = new SideBySideDialog(item);
+        sideBySideDialog.show(getActivity().getSupportFragmentManager(), SideBySideDialog.class.getSimpleName());
+    }
 
+    private void copyFileUsingStream(File source, File dest) throws IOException {
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+            is = new FileInputStream(source);
+            os = new FileOutputStream(dest);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = is.read(buffer)) > 0) {
+                os.write(buffer, 0, length);
+            }
+        } finally {
+            is.close();
+            os.close();
+        }
+    }
+
+    private void share() {
+        SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
+        sweetAlertDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
+        sweetAlertDialog.setTitle(R.string.loading);
+        sweetAlertDialog.show();
+
+        FileManager fileManager = new FileManager(getActivity());
+        File src = new File(item.file);
+        fileManager.createFolder();
+        File dest = fileManager.getOutputMediaFile();
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    copyFileUsingStream(src, dest);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                share(dest);
+                if (ImageViewDialog.this.getActivity() != null)
+                    ImageViewDialog.this.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            sweetAlertDialog.dismissWithAnimation();
+                        }
+                    });
+            }
+        });
+    }
+
+    private void share(File dest) {
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ?
+                FileProvider.getUriForFile(getContext(), getContext().getPackageName(), dest) : Uri.fromFile(dest));
+        shareIntent.setType("image/*");
+        startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.share_video)));
     }
 
     private void delete() {
@@ -101,6 +152,9 @@ public class ImageViewDialog extends DialogFragment {
                 .setConfirmText(getString(R.string.delete))
                 .setCancelText(getString(R.string.cancel))
                 .setConfirmClickListener(sDialog -> {
+                    File file = new File(item.file);
+                    file.delete();
+
                     onItemDeletedListener.onItemDelete(item);
                     ItemDeteleAsyncTask itemDeteleAsyncTask = new ItemDeteleAsyncTask(getContext(), item);
                     itemDeteleAsyncTask.execute();

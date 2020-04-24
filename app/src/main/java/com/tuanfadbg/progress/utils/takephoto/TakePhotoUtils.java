@@ -4,8 +4,10 @@ package com.tuanfadbg.progress.utils.takephoto;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -13,7 +15,10 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.text.TextUtils;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 
 import androidx.annotation.NonNull;
@@ -27,7 +32,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -46,11 +53,13 @@ public class TakePhotoUtils {
     private boolean isPortrait = false;
     private int resizeWidth = 0, resizeHeight = 0, maxSide = 0, quality = 100;
     private boolean isHasOptions = false;
-
+    private boolean multipleImage = false;
     private Bitmap resultBitmap = null;
     private int imageWidth, imageHeight;
 
     private String resultImagePath = "";
+
+    private long lastModifed = 0;
 
     public TakePhotoUtils(Activity activity, String authority) {
         this.activity = activity;
@@ -101,6 +110,11 @@ public class TakePhotoUtils {
     public TakePhotoUtils toPortrait() {
         isPortrait = true;
         isHasOptions = true;
+        return this;
+    }
+
+    public TakePhotoUtils selectMultiple() {
+        multipleImage = true;
         return this;
     }
 
@@ -266,18 +280,56 @@ public class TakePhotoUtils {
 
     private void showBrowserImage() {
         isCamera = false;
-        Intent pickPhoto = new Intent(Intent.ACTION_PICK,
+        Intent pickPhoto = new Intent(Intent.ACTION_GET_CONTENT,
                 android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        pickPhoto.setType("image/*");
+        if (multipleImage && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            pickPhoto.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        }
         activity.startActivityForResult(pickPhoto, RESULT_LOAD_IMG);
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK && requestCode == RESULT_LOAD_IMG) {
-
+            Uri selectedImage = null;
             if (isCamera) {
                 setResultImagePath(mCurrentPhotoPath, null);
+            } else if (data.getClipData() != null) {
+                ClipData mClipData = data.getClipData();
+                ArrayList<Uri> mArrayUri = new ArrayList<Uri>();
+                String imageEncoded;
+                List<String> imagesEncodedList = new ArrayList<>();
+                List<Long> lastModifieds = new ArrayList<>();
+                for (int i = 0; i < mClipData.getItemCount(); i++) {
+
+                    ClipData.Item item = mClipData.getItemAt(i);
+                    Uri uri = item.getUri();
+                    mArrayUri.add(uri);
+                    String[] filePathColumn = {MediaStore.Images.Media.DATA, DocumentsContract.Document.COLUMN_LAST_MODIFIED};
+                    // Get the cursor
+                    Cursor cursor = activity.getContentResolver().query(uri, filePathColumn, null, null, null);
+                    // Move to first row
+                    cursor.moveToFirst();
+
+                    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                    int columnIndex1 = cursor.getColumnIndex(filePathColumn[1]);
+                    imageEncoded = cursor.getString(columnIndex);
+                    imagesEncodedList.add(imageEncoded);
+
+                    String lastModifiedString = cursor.getString(columnIndex1);
+                    lastModifieds.add(TextUtils.isEmpty(lastModifiedString) ? 0 : Long.valueOf(lastModifiedString));
+                    cursor.close();
+                }
+                takePhotoCallback.onMultipleSuccess(imagesEncodedList, mArrayUri, lastModifieds);
+                return;
             } else if (data.getData() != null) {
-                Uri selectedImage = data.getData();
+                selectedImage = data.getData();
+                String[] filePathColumn = {DocumentsContract.Document.COLUMN_LAST_MODIFIED};
+                Cursor cursor = activity.getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+                cursor.moveToFirst();
+                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                String lastModifiedString = cursor.getString(columnIndex);
+                lastModifed = TextUtils.isEmpty(lastModifiedString) ? 0 : Long.valueOf(lastModifiedString);
                 if (selectedImage != null) {
                     setResultImagePath(null, selectedImage);
                 }
@@ -337,7 +389,7 @@ public class TakePhotoUtils {
 //            }
 
             if (takePhotoCallback != null) {
-                takePhotoCallback.onSuccess(resultBitmap, imageWidth, imageHeight);
+                takePhotoCallback.onSuccess(resultBitmap, imageWidth, imageHeight, selectedImage, lastModifed);
             }
 
 //            if (isHasOptions) {

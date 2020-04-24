@@ -1,10 +1,11 @@
 package com.tuanfadbg.progress.ui.image_note;
 
 import android.app.Dialog;
-import android.content.Context;
-import android.content.ContextWrapper;
 import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,7 @@ import android.widget.Toast;
 
 import androidx.fragment.app.DialogFragment;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.tuanfadbg.progress.R;
@@ -25,30 +27,50 @@ import com.tuanfadbg.progress.database.item.ItemInsertAsyncTask;
 import com.tuanfadbg.progress.database.tag.Tag;
 import com.tuanfadbg.progress.database.tag.TagSelectAllAsyncTask;
 import com.tuanfadbg.progress.ui.add_tag.AddTagDialog;
+import com.tuanfadbg.progress.utils.FileManager;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.ObservableEmitter;
+import io.reactivex.rxjava3.core.ObservableOnSubscribe;
+import io.reactivex.rxjava3.core.ObservableSource;
+import io.reactivex.rxjava3.core.Observer;
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class ImageNoteDialog extends DialogFragment {
 
-    public static final String TAG = "example_dialog";
-
+    private static final String TAG = ImageNoteDialog.class.getSimpleName();
     private Bitmap bitmap;
     private ImageView imageView;
     private ChipGroup chipGroup;
     private EditText edtNote;
-    private TextView txtAddTag;
+    private TextView txtAddTag, txtMoreImage;
     private int currentTagId;
     private OnAddNewItemListener onAddNewItemListener;
-//    public static ImageNoteDialog display(FragmentManager fragmentManager) {
-//        ImageNoteDialog exampleDialog = new ImageNoteDialog();
-//        exampleDialog.show(fragmentManager, TAG);
-//        return exampleDialog;
-//    }
+    private ArrayList<Uri> multiImageSelected;
+    private List<Long> lastModifieds;
+    private long lastModified = 0;
 
+    public ImageNoteDialog(Bitmap bitmap, int currentTagId, OnAddNewItemListener onAddNewItemListener) {
+        this.bitmap = bitmap;
+        this.currentTagId = currentTagId;
+        this.onAddNewItemListener = onAddNewItemListener;
+    }
+
+    public ImageNoteDialog(ArrayList<Uri> multiImageSelected, int currentTagId, OnAddNewItemListener onAddNewItemListener) {
+        this.multiImageSelected = multiImageSelected;
+        this.currentTagId = currentTagId;
+        this.onAddNewItemListener = onAddNewItemListener;
+    }
 
     @Override
     public void onStart() {
@@ -81,8 +103,18 @@ public class ImageNoteDialog extends DialogFragment {
         edtNote = view.findViewById(R.id.edt_note);
         chipGroup = view.findViewById(R.id.chip_group);
         txtAddTag = view.findViewById(R.id.txt_add_tag);
+        txtMoreImage = view.findViewById(R.id.txt_more_image);
+
         if (bitmap != null)
             imageView.setImageBitmap(bitmap);
+        else if (multiImageSelected != null) {
+            if (multiImageSelected.size() > 1) {
+                txtMoreImage.setVisibility(View.VISIBLE);
+                txtMoreImage.setText(String.format(Locale.US, "+%d", multiImageSelected.size() - 1));
+            }
+
+            Glide.with(this).load(multiImageSelected.get(0)).into(imageView);
+        }
 
         updateRecommendTag();
 
@@ -152,35 +184,89 @@ public class ImageNoteDialog extends DialogFragment {
     }
 
     private void save() {
-        saveToInternalStorage(bitmap);
+        if (bitmap != null)
+            saveToInternalStorage(bitmap);
+        else if (multiImageSelected != null) {
+
+//            Observable.fromIterable(multiImageSelected)
+//                    .flatMapCompletable(entity->
+//                            Observable.fromIterable(entity)
+//                                    .flatMapCompletable(this::uploadImag2)
+//                                    .doOnComplete(() ->{
+//                                        entity.update(entity.setUploaeded(true));
+//                                        repository.store(entity);
+//                                    }).subscribeOn(Schedulers.computation()));
+            Observable.fromArray(multiImageSelected)
+                    .subscribeOn(Schedulers.newThread())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<ArrayList<Uri>>() {
+                        @Override
+                        public void onSubscribe(@NonNull Disposable d) {
+
+                        }
+
+                        @Override
+                        public void onNext(@NonNull ArrayList<Uri> uris) {
+                            for (int i = 0; i < uris.size(); i++) {
+                                saveToInternalStorage(uris.get(i), lastModifieds.get(i));
+                            }
+                        }
+
+                        @Override
+                        public void onError(@NonNull Throwable e) {
+
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            int tagId = chipGroup.getCheckedChipId();
+                            if (tagId == View.NO_ID)
+                                tagId = chipGroup.getChildAt(0).getId();
+                            if (onAddNewItemListener != null)
+                                onAddNewItemListener.onNewItem(hasNewTag, tagId);
+                            dismiss();
+                        }
+                    });
+        }
     }
 
-    private void saveToInternalStorage(Bitmap bitmapImage) {
-        ContextWrapper cw = new ContextWrapper(getContext());
-        File directory = cw.getDir("data", Context.MODE_PRIVATE);
-        // Create imageDir
-        File mypath = new File(directory, "image_" + new Date().getTime() + ".jpg");
 
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(mypath);
-            bitmapImage.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                fos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+    private void saveToInternalStorage(Uri uri, long lastModified) {
+        FileManager fileManager = new FileManager(getActivity());
+        String mypath = fileManager.saveFileFromInputStreamUri(uri);
 
         ItemInsertAsyncTask itemInsertAsyncTask = new ItemInsertAsyncTask(getContext());
         int tagId = chipGroup.getCheckedChipId();
         if (tagId == View.NO_ID)
             tagId = chipGroup.getChildAt(0).getId();
         Item item = new Item(edtNote.getText().toString().trim()
-                , mypath.getAbsolutePath(), tagId, true);
+                , mypath, tagId, true, lastModified);
+
+        itemInsertAsyncTask.execute(new Data(item, new OnUpdateDatabase() {
+            @Override
+            public void onSuccess() {
+//                if (onAddNewItemListener != null)
+//                    onAddNewItemListener.onNewItem(hasNewTag, finalTagId);
+//                dismiss();
+            }
+
+            @Override
+            public void onFail() {
+                Toast.makeText(getContext(), R.string.unknown_error, Toast.LENGTH_LONG).show();
+            }
+        }));
+    }
+
+    private void saveToInternalStorage(Bitmap bitmapImage) {
+        FileManager fileManager = new FileManager(getActivity());
+        File mypath = fileManager.storeImageOnPrivateStorage(bitmapImage);
+
+        ItemInsertAsyncTask itemInsertAsyncTask = new ItemInsertAsyncTask(getContext());
+        int tagId = chipGroup.getCheckedChipId();
+        if (tagId == View.NO_ID)
+            tagId = chipGroup.getChildAt(0).getId();
+        Item item = new Item(edtNote.getText().toString().trim()
+                , mypath.getAbsolutePath(), tagId, true, lastModified);
         int finalTagId = tagId;
         itemInsertAsyncTask.execute(new Data(item, new OnUpdateDatabase() {
             @Override
@@ -197,16 +283,13 @@ public class ImageNoteDialog extends DialogFragment {
         }));
     }
 
-    public void setBitmap(Bitmap bitmap) {
-        this.bitmap = bitmap;
+
+    public void setLastModifieds(List<Long> lastModifieds) {
+        this.lastModifieds = lastModifieds;
     }
 
-    public void setCurrentTagId(int currentTagId) {
-        this.currentTagId = currentTagId;
-    }
-
-    public void setOnAddNewItemListener(OnAddNewItemListener onAddNewItemListener) {
-        this.onAddNewItemListener = onAddNewItemListener;
+    public void setLastModified(long lastModified) {
+        this.lastModified = lastModified;
     }
 
     public interface OnAddNewItemListener {

@@ -2,6 +2,7 @@ package com.tuanfadbg.progress.ui;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -30,7 +31,10 @@ import com.tuanfadbg.progress.ui.image_note.ImageNoteDialog;
 import com.tuanfadbg.progress.ui.image_view.ImageViewDialog;
 import com.tuanfadbg.progress.ui.main_grid.DataGridAdapter;
 import com.tuanfadbg.progress.ui.main_list.TimelineListAdapter;
+import com.tuanfadbg.progress.ui.settings.SettingsDialog;
 import com.tuanfadbg.progress.ui.side_by_side.SideBySideDialog;
+import com.tuanfadbg.progress.utils.Constants;
+import com.tuanfadbg.progress.utils.SharePreferentUtils;
 import com.tuanfadbg.progress.utils.takephoto.TakePhotoCallback;
 import com.tuanfadbg.progress.utils.takephoto.TakePhotoUtils;
 
@@ -95,13 +99,18 @@ public class MainActivity extends AppCompatActivity {
 
             takePhotoUtils.takePhoto().toPortrait().setListener(new TakePhotoCallback() {
                 @Override
-                public void onSuccess(Bitmap bitmap, int width, int height) {
-                    ImageNoteDialog imageNoteDialog = new ImageNoteDialog();
-                    imageNoteDialog.setBitmap(bitmap);
-                    imageNoteDialog.setCurrentTagId(currentTagSelected);
-                    imageNoteDialog.setOnAddNewItemListener((hasNewTag, tagId) -> {
-                        updateNewItem(hasNewTag, tagId);
-                    });
+                public void onMultipleSuccess(List<String> imagesEncodedList, ArrayList<Uri> mArrayUri, List<Long> lastModifieds) {
+
+                }
+
+                @Override
+                public void onSuccess(Bitmap bitmap, int width, int height, Uri sourceUri, long lastModified) {
+                    ImageNoteDialog imageNoteDialog = new ImageNoteDialog(
+                            bitmap,
+                            currentTagSelected,
+                            (hasNewTag, tagId) -> {
+                                updateNewItem(hasNewTag, tagId);
+                            });
                     imageNoteDialog.show(getSupportFragmentManager(), ImageNoteDialog.class.getSimpleName());
                 }
 
@@ -123,13 +132,17 @@ public class MainActivity extends AppCompatActivity {
                 sweetAlertDialog.show();
                 return;
             }
-            SideBySideDialog sideBySideDialog = new SideBySideDialog();
-            sideBySideDialog.setItems(datas);
+            SideBySideDialog sideBySideDialog = new SideBySideDialog(datas);
             sideBySideDialog.show(getSupportFragmentManager(), SideBySideDialog.class.getSimpleName());
+        });
+
+        findViewById(R.id.img_settings).setOnClickListener(v -> {
+            SettingsDialog settingsDialog = new SettingsDialog();
+            settingsDialog.show(getSupportFragmentManager(), SettingsDialog.class.getSimpleName());
         });
     }
 
-    private void updateNewItem(boolean hasNewTag, int tagId) {
+    public void updateNewItem(boolean hasNewTag, int tagId) {
         if (hasNewTag) {
             TagSelectAllAsyncTask tagSelectAsyncTask = new TagSelectAllAsyncTask(MainActivity.this);
             tagSelectAsyncTask.execute(tags -> {
@@ -137,16 +150,16 @@ public class MainActivity extends AppCompatActivity {
                 ((Chip) findViewById(tagId)).setChecked(true);
             });
         } else {
-            try {
-                ((Chip) findViewById(tagId)).setChecked(true);
-            } catch (Exception e) { // no item found
-                selectTag(currentTagSelected);
-            }
+            selectTag(currentTagSelected);
         }
     }
 
 
     private void setData() {
+        String name = (String) SharePreferentUtils.getSharedPreference(Constants.NAME, "");
+        name = String.format(getString(R.string.hello_s), name);
+        txtHello.setText(name);
+
         TagSelectAllAsyncTask tagSelectAsyncTask = new TagSelectAllAsyncTask(this);
         tagSelectAsyncTask.execute(tags -> {
             if (tags == null)
@@ -196,7 +209,14 @@ public class MainActivity extends AppCompatActivity {
     private void viewImage(Item item) {
         ImageViewDialog imageViewDialog = new ImageViewDialog();
         imageViewDialog.setItem(item);
-        imageViewDialog.setOnItemDeletedListener(item1 -> dataGridAdapter.removeItem(item1));
+        imageViewDialog.setOnItemDeletedListener(item1 -> {
+            datas.remove(item1);
+            if (imgGrid.isSelected())
+                dataGridAdapter.removeItem(item1);
+            else if (imgList.isSelected()) {
+                timelineListAdapter.setData(datas);
+            }
+        });
         imageViewDialog.show(getSupportFragmentManager(), ImageViewDialog.class.getSimpleName());
     }
 
@@ -247,5 +267,18 @@ public class MainActivity extends AppCompatActivity {
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         takePhotoUtils.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    public void updateName(String name) {
+        name = String.format(getString(R.string.hello_s), name);
+        txtHello.setText(name);
+    }
+
+    public TakePhotoUtils getTakePhotoUtils() {
+        return takePhotoUtils;
+    }
+
+    public int getCurrentTagSelected() {
+        return currentTagSelected;
     }
 }

@@ -7,4 +7,6 @@
     <color name="blue_dark">#0084B5</color>
     <color name="blue_bg_days_ago">#B033B5E5</color>
     <color name="gray">#AEAEAE</color>
+    <color name="color_gray_6a6a6a">#6A6A6A</color>
+    <color name="gray_dimmer">#52000000</color>
 </resources>

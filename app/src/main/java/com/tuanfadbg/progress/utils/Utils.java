@@ -1,5 +1,6 @@
 package com.tuanfadbg.progress.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Environment;
@@ -7,11 +8,16 @@ import android.util.DisplayMetrics;
 
 import androidx.core.content.ContextCompat;
 
+import com.tuanfadbg.progress.ui.passcode.CheckPasscodeActivity;
+
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+
+import javax.activation.MimetypesFileTypeMap;
 
 public class Utils {
     public static final String FOLDER = "Before vs After";
@@ -30,11 +36,11 @@ public class Utils {
         return diff;
     }
 
-    public static float convertDpToPixel(float dp, Context context){
+    public static float convertDpToPixel(float dp, Context context) {
         return dp * ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 
-    public static float convertPixelsToDp(float px, Context context){
+    public static float convertPixelsToDp(float px, Context context) {
         return px / ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 
@@ -49,5 +55,35 @@ public class Utils {
 
     public static boolean isGraintedPermission(Context activity, String permission) {
         return ContextCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED;
+    }
+
+    public static boolean isEmailValid(String email) {
+        String regex = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
+        return email.matches(regex);
+    }
+
+    public static int[] getScreenWidthAndHeight(Activity activity) {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int height = displayMetrics.heightPixels;
+        int width = displayMetrics.widthPixels;
+        int[] result = new int[2];
+        result[0] = width;
+        result[1] = height;
+        return result;
+    }
+
+    public static boolean isImage(String filepath) {
+        try {
+            File f = new File(filepath);
+            String mimetype = new MimetypesFileTypeMap().getContentType(f);
+            String type = mimetype.split("/")[0];
+            if (type.equals("image"))
+                return true;
+            else
+                return false;
+        } catch (Exception e) {
+            return true;
+        }
     }
 }

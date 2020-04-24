@@ -2,11 +2,12 @@ package com.tuanfadbg.progress.utils;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
@@ -17,6 +18,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -28,9 +31,8 @@ public class FileManager {
     }
 
     public String storeImage(Bitmap image) {
-        FileManager qrFileManager = new FileManager(activity);
-        qrFileManager.createFolder();
-        File pictureFile = qrFileManager.getOutputMediaFile();
+        createFolder();
+        File pictureFile = getOutputMediaFile();
         try {
             FileOutputStream fos = new FileOutputStream(pictureFile);
             image.compress(Bitmap.CompressFormat.PNG, 100, fos);
@@ -47,7 +49,22 @@ public class FileManager {
         return "";
     }
 
-    private File getOutputMediaFile() {
+    public String storeImageWithoutBroadcast(Bitmap image) {
+        createFolder();
+        File pictureFile = getOutputMediaFile();
+        try {
+            FileOutputStream fos = new FileOutputStream(pictureFile);
+            image.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.close();
+            return pictureFile.getAbsolutePath();
+        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
+        }
+        return "";
+    }
+
+
+    public File getOutputMediaFile() {
         File mediaStorageDir = new File(Utils.getFolderPath());
 
         String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmms").format(new Date());
@@ -57,7 +74,7 @@ public class FileManager {
         return mediaFile;
     }
 
-    private void createFolder() {
+    public void createFolder() {
         File f = new File(Utils.getFolderPath());
         if (!f.exists())
             if (!f.mkdir()) {
@@ -79,6 +96,87 @@ public class FileManager {
         activity.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(pictureFile.getAbsolutePath()))));
         MediaScannerConnection.scanFile(
                 activity, new String[]{pictureFile.getAbsolutePath()}, null,
-                (path, uri) -> {});
+                (path, uri) -> {
+                });
+    }
+
+    public File storeImageOnPrivateStorage(Bitmap bitmapImage) {
+        File mypath = getNewFileInPrivateStorate();
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(mypath);
+            bitmapImage.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return mypath;
+    }
+
+    private File getNewFileInPrivateStorate() {
+        ContextWrapper cw = new ContextWrapper(activity);
+        File directory = cw.getDir("data", Context.MODE_PRIVATE);
+        return new File(directory, "image_" + new Date().getTime() + ".jpg");
+    }
+
+    public String saveFileFromInputStreamUri(Uri uri) {
+        InputStream inputStream = null;
+        String filePath = null;
+
+        if (uri.getAuthority() != null) {
+            try {
+                inputStream = activity.getContentResolver().openInputStream(uri);
+                File photoFile = createTemporalFileFrom(inputStream);
+
+                filePath = photoFile.getPath();
+
+            } catch (FileNotFoundException e) {
+               e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (inputStream != null) {
+                        inputStream.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return filePath;
+    }
+
+    private File createTemporalFileFrom(InputStream inputStream) throws IOException {
+        File targetFile = null;
+
+        if (inputStream != null) {
+            int read;
+            byte[] buffer = new byte[8 * 1024];
+
+            targetFile = getNewFileInPrivateStorate();
+            OutputStream outputStream = new FileOutputStream(targetFile);
+
+            while ((read = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
+            }
+            outputStream.flush();
+
+            try {
+                outputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return targetFile;
     }
 }

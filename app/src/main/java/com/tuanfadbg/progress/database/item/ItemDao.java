@@ -10,10 +10,10 @@ import java.util.List;
 
 @Dao
 public interface ItemDao {
-    @Query("SELECT * FROM Item ORDER BY uid DESC")
+    @Query("SELECT * FROM Item ORDER BY create_at DESC")
     List<Item> getAll();
 
-    @Query("SELECT * FROM Item WHERE tag IN (:tagId) ORDER BY uid DESC")
+    @Query("SELECT * FROM Item WHERE tag IN (:tagId) ORDER BY create_at DESC")
     List<Item> getAllByTag(int tagId);
 
     @Query("SELECT * FROM Item ORDER BY uid DESC limit 1")

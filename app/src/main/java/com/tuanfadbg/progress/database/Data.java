@@ -1,6 +1,6 @@
 package com.tuanfadbg.progress.database;
 
-public class Data<C> {
+public class Data<C extends Object> {
     private C item;
     private OnUpdateDatabase onUpdateDatabase;
 

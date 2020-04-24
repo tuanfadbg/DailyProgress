@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/gray_dimmer">
 
     <View
         android:id="@+id/constraintLayout"
@@ -55,11 +56,11 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:fontFamily="@font/lato_regular"
-        app:singleSelection="true"
-        app:singleLine="false"
         app:layout_constraintEnd_toEndOf="@+id/edt_note"
         app:layout_constraintStart_toStartOf="@+id/edt_note"
-        app:layout_constraintTop_toBottomOf="@+id/edt_note">
+        app:layout_constraintTop_toBottomOf="@+id/edt_note"
+        app:singleLine="false"
+        app:singleSelection="true">
 
         <!--        <com.google.android.material.chip.Chip-->
         <!--            android:id="@+id/default_tag"-->
@@ -131,5 +132,21 @@
         app:layout_constraintBottom_toBottomOf="@+id/txt_save"
         app:layout_constraintEnd_toEndOf="@+id/constraintLayout"
         app:layout_constraintTop_toTopOf="@+id/txt_save" />
+
+    <TextView
+        android:id="@+id/txt_more_image"
+        android:layout_width="wrap_content"
+        android:visibility="gone"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_more_image"
+        android:fontFamily="@font/lato_medium"
+        android:paddingStart="20dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="8dp"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@+id/imageView"
+        app:layout_constraintEnd_toEndOf="@+id/imageView" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
