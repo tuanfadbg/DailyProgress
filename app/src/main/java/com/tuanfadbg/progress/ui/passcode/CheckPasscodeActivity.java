@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.EditText;
@@ -51,8 +52,8 @@ public class CheckPasscodeActivity extends AppCompatActivity {
         int[] dimension = Utils.getScreenWidthAndHeight(this);
 
         float initWidth = Utils.convertDpToPixel(30, this);
-        float scaleX = dimension[0] / initWidth;
-        float scaleY = dimension[1] / initWidth;
+        float scaleX = dimension[0] / initWidth * 2;
+        float scaleY = dimension[1] / initWidth * 2;
         viewRight.animate()
                 .scaleX(scaleX)
                 .setDuration(1000)
@@ -63,7 +64,7 @@ public class CheckPasscodeActivity extends AppCompatActivity {
                 .scaleY(scaleY)
                 .setDuration(800)
                 .setStartDelay(1500)
-                .setInterpolator(new DecelerateInterpolator())
+                .setInterpolator(new AccelerateInterpolator())
                 .start();
 
         Handler handler = new Handler();

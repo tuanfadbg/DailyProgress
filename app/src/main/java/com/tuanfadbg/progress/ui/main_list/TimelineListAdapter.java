@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -138,6 +139,7 @@ public class TimelineListAdapter extends RecyclerView.Adapter<TimelineListAdapte
 
             rcvData.setAdapter(new ItemListAdapter(context, datas.get(position).getItems(), onItemClickListener));
             rcvData.setLayoutManager(new LinearLayoutManager(context, RecyclerView.VERTICAL, false));
+//            rcvData.setLayoutManager(new GridLayoutManager(context, 2));
         }
     }
 }

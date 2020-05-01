@@ -29,3 +29,8 @@
 
 # for DexGuard only
 -keepresourcexmlelements manifest/application/meta-data@value=GlideModule
+
+-keep class cn.pedant.** { *; }
+-keep class cn.pedant.SweetAlert.Rotate3dAnimation {
+    public <init>(...);
+}

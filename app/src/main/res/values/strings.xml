@@ -56,4 +56,5 @@
     <string name="authen_error">Authentication error</string>
     <string name="import_success">Image was imported successfully</string>
     <string name="import_not_image">Please select the image file</string>
+    <string name="close">Close</string>
 </resources>

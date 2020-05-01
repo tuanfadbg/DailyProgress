@@ -24,6 +24,7 @@ import com.tuanfadbg.progress.database.Data;
 import com.tuanfadbg.progress.database.OnUpdateDatabase;
 import com.tuanfadbg.progress.database.item.Item;
 import com.tuanfadbg.progress.database.item.ItemInsertAsyncTask;
+import com.tuanfadbg.progress.database.item.ItemUpdateAsyncTask;
 import com.tuanfadbg.progress.database.tag.Tag;
 import com.tuanfadbg.progress.database.tag.TagSelectAllAsyncTask;
 import com.tuanfadbg.progress.ui.add_tag.AddTagDialog;
@@ -59,6 +60,8 @@ public class ImageNoteDialog extends DialogFragment {
     private ArrayList<Uri> multiImageSelected;
     private List<Long> lastModifieds;
     private long lastModified = 0;
+    private Item item;
+    private OnItemEditedListener onItemEditedListener;
 
     public ImageNoteDialog(Bitmap bitmap, int currentTagId, OnAddNewItemListener onAddNewItemListener) {
         this.bitmap = bitmap;
@@ -70,6 +73,13 @@ public class ImageNoteDialog extends DialogFragment {
         this.multiImageSelected = multiImageSelected;
         this.currentTagId = currentTagId;
         this.onAddNewItemListener = onAddNewItemListener;
+    }
+
+    // edit
+    public ImageNoteDialog(Item item, OnItemEditedListener onItemEditedListener) {
+        this.item = item;
+        this.currentTagId = item.tag;
+        this.onItemEditedListener = onItemEditedListener;
     }
 
     @Override
@@ -112,8 +122,11 @@ public class ImageNoteDialog extends DialogFragment {
                 txtMoreImage.setVisibility(View.VISIBLE);
                 txtMoreImage.setText(String.format(Locale.US, "+%d", multiImageSelected.size() - 1));
             }
-
             Glide.with(this).load(multiImageSelected.get(0)).into(imageView);
+        } else if (item != null) {
+            Glide.with(this).load(item.file).into(imageView);
+            ((TextView) view.findViewById(R.id.txt_delete)).setText(R.string.close);
+            edtNote.setText(item.title);
         }
 
         updateRecommendTag();
@@ -187,15 +200,6 @@ public class ImageNoteDialog extends DialogFragment {
         if (bitmap != null)
             saveToInternalStorage(bitmap);
         else if (multiImageSelected != null) {
-
-//            Observable.fromIterable(multiImageSelected)
-//                    .flatMapCompletable(entity->
-//                            Observable.fromIterable(entity)
-//                                    .flatMapCompletable(this::uploadImag2)
-//                                    .doOnComplete(() ->{
-//                                        entity.update(entity.setUploaeded(true));
-//                                        repository.store(entity);
-//                                    }).subscribeOn(Schedulers.computation()));
             Observable.fromArray(multiImageSelected)
                     .subscribeOn(Schedulers.newThread())
                     .observeOn(AndroidSchedulers.mainThread())
@@ -227,6 +231,8 @@ public class ImageNoteDialog extends DialogFragment {
                             dismiss();
                         }
                     });
+        } else if (item != null) {
+            updateItem();
         }
     }
 
@@ -283,6 +289,28 @@ public class ImageNoteDialog extends DialogFragment {
         }));
     }
 
+    private void updateItem() {
+        ItemUpdateAsyncTask itemUpdateAsyncTask = new ItemUpdateAsyncTask(getContext());
+        int tagId = chipGroup.getCheckedChipId();
+        if (tagId == View.NO_ID)
+            tagId = chipGroup.getChildAt(0).getId();
+        item.tag = tagId;
+        item.title = edtNote.getText().toString().trim();
+        itemUpdateAsyncTask.execute(new Data(item, new OnUpdateDatabase() {
+            @Override
+            public void onSuccess() {
+                if (onItemEditedListener != null)
+                    onItemEditedListener.onEdited(item);
+                dismiss();
+            }
+
+            @Override
+            public void onFail() {
+                Toast.makeText(getContext(), R.string.unknown_error, Toast.LENGTH_LONG).show();
+            }
+        }));
+    }
+
 
     public void setLastModifieds(List<Long> lastModifieds) {
         this.lastModifieds = lastModifieds;
@@ -294,5 +322,9 @@ public class ImageNoteDialog extends DialogFragment {
 
     public interface OnAddNewItemListener {
         void onNewItem(boolean hasNewTag, int tagSelected);
+    }
+
+    public interface OnItemEditedListener {
+        void onEdited(Item item);
     }
 }

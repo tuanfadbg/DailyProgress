@@ -2,24 +2,33 @@ package com.tuanfadbg.progress.ui.image_view;
 
 import android.app.Dialog;
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 
 import com.bumptech.glide.Glide;
 import com.ortiz.touchview.TouchImageView;
 import com.tuanfadbg.progress.R;
 import com.tuanfadbg.progress.database.item.Item;
 import com.tuanfadbg.progress.database.item.ItemDeteleAsyncTask;
+import com.tuanfadbg.progress.ui.image_note.ImageNoteDialog;
 import com.tuanfadbg.progress.ui.side_by_side.SideBySideDialog;
 import com.tuanfadbg.progress.utils.FileManager;
 
@@ -29,16 +38,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
+import static androidx.fragment.app.FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT;
+import static androidx.fragment.app.FragmentStatePagerAdapter.BEHAVIOR_SET_USER_VISIBLE_HINT;
+
 public class ImageViewDialog extends DialogFragment {
 
+    private static final String TAG = ImageNoteDialog.class.getSimpleName();
     private TouchImageView imageView;
     private Item item;
     private ConstraintLayout ctBottom;
     private OnItemDeletedListener onItemDeletedListener;
+    private TextView txtTitle;
 
     @Override
     public void onStart() {
@@ -69,7 +84,9 @@ public class ImageViewDialog extends DialogFragment {
         super.onViewCreated(view, savedInstanceState);
         imageView = view.findViewById(R.id.imageView);
         ctBottom = view.findViewById(R.id.ct_bottom);
+        txtTitle = view.findViewById(R.id.txt_title);
 
+        txtTitle.setText(item.title);
         Glide.with(imageView).load(new File(item.file)).into(imageView);
 
         imageView.setOnClickListener(v -> {
@@ -81,8 +98,78 @@ public class ImageViewDialog extends DialogFragment {
 
         view.findViewById(R.id.img_compare).setOnClickListener(v -> compare());
         view.findViewById(R.id.img_back).setOnClickListener(v -> dismiss());
+        view.findViewById(R.id.img_edit).setOnClickListener(v -> edit());
         view.findViewById(R.id.img_share).setOnClickListener(v -> share());
         view.findViewById(R.id.img_delete).setOnClickListener(v -> delete());
+        if (!TextUtils.isEmpty(item.title))
+            txtTitle.setOnClickListener(v -> viewMoreTitle());
+    }
+
+//    private List<MotionEvent> motionEvents = new ArrayList<>();
+//    View.OnTouchListener onTouchListener = (v, event) -> {
+//        switch (event.getAction()) {
+//            case MotionEvent.ACTION_DOWN: {
+//                motionEvents.add(event);
+//                break;
+//            }
+//
+//            case MotionEvent.ACTION_MOVE: {
+//                motionEvents.add(event);
+//                break;
+//            }
+//
+//            case MotionEvent.ACTION_UP: {
+//                motionEvents.add(event);
+//
+//                int lastest = motionEvents.size() - 1;
+//                float deltaX = motionEvents.get(lastest).getX() - motionEvents.get(0).getX();
+//                float deltaY = motionEvents.get(lastest).getY() - motionEvents.get(0).getY();
+//                long deltaTime = motionEvents.get(lastest).getEventTime() - motionEvents.get(0).getEventTime();
+//
+//                if (deltaTime < 300) {
+//                    if (Math.abs(deltaY) < Math.abs(deltaX)) {
+//                        if (deltaX < 0) {
+//                            swipeLeft();
+//                        } else
+//                            swipeRight();
+//                    }
+//                }
+//                motionEvents.clear();
+//                break;
+//            }
+//
+//        }
+//        return false;
+//    };
+
+//    private void swipeLeft() {
+//        Log.e(TAG, "swipeLeft: " );
+//    }
+//
+//    private void swipeRight() {
+//        Log.e(TAG, "swipeRight: ");
+//    }
+
+    private void viewMoreTitle() {
+        if (txtTitle.getMaxLines() < 10)
+            txtTitle.setMaxLines(Integer.MAX_VALUE);
+        else txtTitle.setMaxLines(2);
+    }
+
+    private void edit() {
+        ImageNoteDialog imageNoteDialog = new ImageNoteDialog(item, new ImageNoteDialog.OnItemEditedListener() {
+            @Override
+            public void onEdited(Item item) {
+                if (getActivity() == null)
+                    return;
+                SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getActivity(), SweetAlertDialog.SUCCESS_TYPE);
+                sweetAlertDialog.setTitle(getString(R.string.saved));
+                sweetAlertDialog.setContentText(getString(R.string.dialog_ok));
+                sweetAlertDialog.show();
+            }
+        });
+
+        imageNoteDialog.show(getFragmentManager(), ImageNoteDialog.class.getSimpleName());
     }
 
     private void compare() {

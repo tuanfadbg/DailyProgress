@@ -11,15 +11,33 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/ct_bottom"
         android:layout_width="0dp"
-        android:layout_height="100dp"
-        android:background="@drawable/white_gradient_up"
+        android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:background="@drawable/white_gradient_up"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/txt_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="@font/lato_regular"
+            android:maxLines="2"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textColor="@android:color/white"
+            app:layout_constraintBottom_toTopOf="@+id/img_back"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
             android:id="@+id/img_share"
@@ -29,21 +47,32 @@
             android:src="@drawable/ic_share"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/img_delete"
-            app:layout_constraintStart_toEndOf="@+id/img_back"
-            app:layout_constraintTop_toTopOf="@+id/img_back" />
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/img_edit" />
 
         <ImageView
             android:id="@+id/img_delete"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="15dp"
-            android:scaleY="0.8"
             android:scaleX="0.8"
+            android:scaleY="0.8"
             android:src="@drawable/ic_delete"
-            app:layout_constraintBottom_toBottomOf="@+id/img_share"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/img_share"
-            app:layout_constraintTop_toTopOf="@+id/img_share" />
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/img_share" />
+
+        <ImageView
+            android:id="@+id/img_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="18dp"
+            android:src="@drawable/ic_edit_2"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/img_share"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/img_back" />
 
         <ImageView
             android:id="@+id/img_back"
@@ -52,7 +81,8 @@
             android:padding="15dp"
             android:src="@drawable/ic_back"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/img_share"
+            app:layout_constraintEnd_toStartOf="@+id/img_edit"
+            app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -64,5 +94,4 @@
         android:src="@drawable/ic_side_by_side"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>
