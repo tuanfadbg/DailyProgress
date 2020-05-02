@@ -1,6 +1,7 @@
 package com.tuanfadbg.progress.ui;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -33,7 +34,6 @@ import com.tuanfadbg.progress.ui.main_grid.DataGridAdapter;
 import com.tuanfadbg.progress.ui.main_list.TimelineListAdapter;
 import com.tuanfadbg.progress.ui.settings.SettingsDialog;
 import com.tuanfadbg.progress.ui.side_by_side.SideBySideDialog;
-import com.tuanfadbg.progress.utils.Constants;
 import com.tuanfadbg.progress.utils.SharePreferentUtils;
 import com.tuanfadbg.progress.utils.takephoto.TakePhotoCallback;
 import com.tuanfadbg.progress.utils.takephoto.TakePhotoUtils;
@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
 
     DataGridAdapter dataGridAdapter;
     TimelineListAdapter timelineListAdapter;
+    OnPermissionGranted onPermissionGranted;
 
     com.tuanfadbg.progress.utils.takephoto.TakePhotoUtils takePhotoUtils;
     int currentTagSelected;
@@ -122,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.img_compare).setOnClickListener(v -> {
-            if (datas == null) {
+            if (datas == null || datas.size() == 0) {
                 SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(this, SweetAlertDialog.WARNING_TYPE);
                 if (chipGroup.getVisibility() == View.VISIBLE)
                     sweetAlertDialog.setTitle(R.string.error_no_image_on_tag);
@@ -156,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void setData() {
-        String name = (String) SharePreferentUtils.getSharedPreference(Constants.NAME, "");
+        String name = SharePreferentUtils.getName(true);
         name = String.format(getString(R.string.hello_s), name);
         txtHello.setText(name);
 
@@ -266,6 +267,13 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (onPermissionGranted != null) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                onPermissionGranted.onPermissionGranted();
+            }
+            onPermissionGranted = null;
+            return;
+        }
         takePhotoUtils.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
@@ -280,5 +288,13 @@ public class MainActivity extends AppCompatActivity {
 
     public int getCurrentTagSelected() {
         return currentTagSelected;
+    }
+
+    public void setOnPermissionGranted(OnPermissionGranted onPermissionGranted) {
+        this.onPermissionGranted = onPermissionGranted;
+    }
+
+    public interface OnPermissionGranted {
+        void onPermissionGranted();
     }
 }

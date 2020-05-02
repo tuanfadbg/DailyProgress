@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
 
+import com.tuanfadbg.progress.R;
+
 import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -13,17 +15,27 @@ public class SharePreferentUtils {
     private static final SharedPreferencesLoader sPrefsLoader = new SharedPreferencesLoader();
     private static Future<SharedPreferences> sReferrerPrefs;
     private static Context mContext;
+    public static final String IS_FIRST_OPEN = "IS_FIRST_OPEN";
     public static final String IS_PREMIUM = "IS_PREMIUM";
     public static final String IS_PASSCODE_ENABLE = "IS_PASSCODE_ENABLE";
     public static final String PASSCODE = "PASSCODE";
     public static final String TEMP_PASSCODE = "TEMP_PASSCODE";
     public static final String EMAIL = "EMAIL";
+    public static final String NAME = "NAME";
 
     public static void initial(Context context) {
         mContext = context;
         if (null == sReferrerPrefs) {
             sReferrerPrefs = sPrefsLoader.loadPreferences(context, context.getPackageName(), null);
         }
+    }
+
+    public static boolean isFirstOpen() {
+        return (boolean) SharePreferentUtils.getSharedPreference(IS_FIRST_OPEN, true);
+    }
+
+    public static void setFirstOpen() {
+        SharePreferentUtils.setSharedPreference(IS_FIRST_OPEN, false);
     }
 
     public static boolean isPremium() {
@@ -55,6 +67,13 @@ public class SharePreferentUtils {
         return pass.equals(passcode);
     }
 
+    public static boolean hasPasscode() {
+        String pass = (String) SharePreferentUtils.getSharedPreference(PASSCODE, "");
+        if (TextUtils.isEmpty(pass))
+            return false;
+        return true;
+    }
+
     public static void setNewPasscode(String newPasscode) {
         SharePreferentUtils.setSharedPreference(PASSCODE, newPasscode);
     }
@@ -79,6 +98,14 @@ public class SharePreferentUtils {
 
     public static String getEmail() {
         return (String) SharePreferentUtils.getSharedPreference(EMAIL, "");
+    }
+
+    public static void setName(String name) {
+        SharePreferentUtils.setSharedPreference(NAME, name);
+    }
+
+    public static String getName(boolean hasDefault) {
+        return (String) SharePreferentUtils.getSharedPreference(NAME, hasDefault ? mContext.getString(R.string.default_name) : "");
     }
 
     public static Object getSharedPreference(String keyPref, Object defaultValue) {

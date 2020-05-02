@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import android.widget.TextView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.DialogFragment;
 
+import com.android.dx.command.Main;
 import com.tuanfadbg.progress.R;
 import com.tuanfadbg.progress.ui.MainActivity;
 import com.tuanfadbg.progress.ui.edit_name.EditNameDialog;
@@ -72,7 +74,10 @@ public class SettingsDialog extends DialogFragment {
         ctExport = view.findViewById(R.id.ct_export);
         switchPassword = view.findViewById(R.id.switch_passcode);
 
-        txtName.setText((String) SharePreferentUtils.getSharedPreference(Constants.NAME, ""));
+        String name = SharePreferentUtils.getName(false);
+        if (TextUtils.isEmpty(name))
+            name = getString(R.string.enter_your_name);
+        txtName.setText(name);
         setLayout();
         setListener(view);
     }
@@ -96,12 +101,26 @@ public class SettingsDialog extends DialogFragment {
         view.findViewById(R.id.ct_import).setOnClickListener(v -> importPhoto());
 
         view.findViewById(R.id.img_back).setOnClickListener(v -> dismiss());
-        view.findViewById(R.id.textView17).setOnClickListener(v -> {
-            EditNameDialog editNameDialog = new EditNameDialog(newName -> txtName.setText(newName));
+        txtName.setOnClickListener(v -> {
+            EditNameDialog editNameDialog = new EditNameDialog(newName -> {
+                txtName.setText(newName);
+                ((MainActivity) getActivity()).updateName(newName);
+            });
             editNameDialog.show(getFragmentManager(), EditNameDialog.class.getSimpleName());
         });
-        switchPassword.setOnCheckedChangeListener((buttonView, isChecked) -> SharePreferentUtils.setPasscodeEnable(isChecked));
-        ctPasscodeSetting.setOnClickListener(v -> showPassCodeSettings());
+        view.findViewById(R.id.textView17).setOnClickListener(v -> txtName.performClick());
+        switchPassword.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                if (SharePreferentUtils.hasPasscode()) {
+                    SharePreferentUtils.setPasscodeEnable(true);
+                } else {
+                    showPassCodeSettings(true);
+                }
+            } else {
+                SharePreferentUtils.setPasscodeEnable(false);
+            }
+        });
+        ctPasscodeSetting.setOnClickListener(v -> showPassCodeSettings(false));
         view.findViewById(R.id.txt_upgrade).setOnClickListener(v -> upgradePremium());
     }
 
@@ -174,8 +193,22 @@ public class SettingsDialog extends DialogFragment {
         sweetAlertDialog.show();
     }
 
-    private void showPassCodeSettings() {
-        CreatePasscodeDialog createPasscodeDialog = new CreatePasscodeDialog();
+    private void showPassCodeSettings(boolean setEnablePassCodeAfterDone) {
+        CreatePasscodeDialog createPasscodeDialog = new CreatePasscodeDialog(new CreatePasscodeDialog.OnPasscodeSetup() {
+            @Override
+            public void onSuccess() {
+                if (setEnablePassCodeAfterDone) {
+                    SharePreferentUtils.setPasscodeEnable(true);
+                    switchPassword.setChecked(true);
+                }
+            }
+
+            @Override
+            public void onFail() {
+                SharePreferentUtils.setPasscodeEnable(false);
+                switchPassword.setChecked(false);
+            }
+        });
         createPasscodeDialog.show(getFragmentManager(), CreatePasscodeDialog.class.getSimpleName());
     }
 

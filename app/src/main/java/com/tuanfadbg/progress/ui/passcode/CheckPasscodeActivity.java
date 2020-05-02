@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
@@ -11,7 +12,6 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat;
 
 import com.tuanfadbg.progress.R;
 import com.tuanfadbg.progress.ui.MainActivity;
+import com.tuanfadbg.progress.ui.edit_name.EnterNameDialog;
 import com.tuanfadbg.progress.ui.passcode.forgot_password.ForgotPasswordDialog;
 import com.tuanfadbg.progress.utils.SharePreferentUtils;
 import com.tuanfadbg.progress.utils.Utils;
@@ -29,7 +30,7 @@ import java.util.concurrent.Executor;
 
 public class CheckPasscodeActivity extends AppCompatActivity {
 
-    ConstraintLayout ctPlash;
+    ConstraintLayout ctPlash, ctPasscode;
     View viewLeft, viewRight;
 
     private TextView txtTitle;
@@ -43,6 +44,7 @@ public class CheckPasscodeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_passcode);
         ctPlash = findViewById(R.id.ct_splash);
+        ctPasscode = findViewById(R.id.ct_passcode);
         viewLeft = findViewById(R.id.view_left);
         viewRight = findViewById(R.id.view_right);
 
@@ -71,13 +73,21 @@ public class CheckPasscodeActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
+                if (SharePreferentUtils.isFirstOpen()) {
+                    SharePreferentUtils.setFirstOpen();
+
+                    EnterNameDialog enterNameDialog = new EnterNameDialog(() -> goToMain());
+                    enterNameDialog.show(getSupportFragmentManager(), EnterNameDialog.class.getSimpleName());
+
+                    ctPlash.setVisibility(View.GONE);
+                    return;
+                }
                 if (SharePreferentUtils.isPasscodeEnable()) {
                     ctPlash.setVisibility(View.GONE);
+                    ctPasscode.setVisibility(View.VISIBLE);
                     showCheckPasscode();
-                }
-                else {
-                    Intent mainIntent = new Intent(CheckPasscodeActivity.this, MainActivity.class);
-                    startActivity(mainIntent);
+                } else {
+                    goToMain();
                 }
             }
         }, 2300);

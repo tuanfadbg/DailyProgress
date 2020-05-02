@@ -39,12 +39,11 @@
     <string name="import_image">Import image</string>
     <string name="premium">Premium</string>
     <string name="no_ads">No ads</string>
-    <string name="what_is_your_name">What is your name?</string>
     <string name="hello_s">Hello, %s</string>
     <string name="enter_passcode">Enter Passcode</string>
     <string name="reenter_password">Reenter Passcode</string>
     <string name="passcode_successfully">Your passcode was set successfully</string>
-    <string name="biometric_title">Biometric login for my app</string>
+    <string name="biometric_title">Biometric login</string>
     <string name="biometric_subtitle">Log in using your biometric credential</string>
     <string name="forgot_password">Forgot Password</string>
     <string name="enter_your_register_email">Enter your register email</string>
@@ -57,4 +56,7 @@
     <string name="import_success">Image was imported successfully</string>
     <string name="import_not_image">Please select the image file</string>
     <string name="close">Close</string>
+    <string name="str_continue">Continue</string>
+    <string name="enter_your_name">Write your name</string>
+    <string name="default_name">My Friend</string>
 </resources>

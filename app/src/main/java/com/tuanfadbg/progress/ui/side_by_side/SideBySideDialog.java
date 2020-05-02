@@ -1,7 +1,9 @@
 package com.tuanfadbg.progress.ui.side_by_side;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -42,6 +44,7 @@ import com.tuanfadbg.progress.database.tag.Tag;
 import com.tuanfadbg.progress.database.tag.TagInsertAsyncTask;
 import com.tuanfadbg.progress.database.tag.TagSelectAllAsyncTask;
 import com.tuanfadbg.progress.database.tag.TagSelectNewestAsyncTask;
+import com.tuanfadbg.progress.ui.MainActivity;
 import com.tuanfadbg.progress.ui.image_view.ImageViewDialog;
 import com.tuanfadbg.progress.ui.main_grid.OnItemClickListener;
 import com.tuanfadbg.progress.ui.select_image.SelectImageDialog;
@@ -60,6 +63,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 public class SideBySideDialog extends DialogFragment {
 
     public static final String TAG = SideBySideDialog.class.getSimpleName();
+    private static final int WRITE_EXTERNAL_REQUEST_CODE = 1222;
 
     private TouchImageView imageView;
     private Item item;
@@ -352,49 +356,67 @@ public class SideBySideDialog extends DialogFragment {
     }
 
     private void save() {
-        SweetAlertDialog pDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
-        pDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
-        pDialog.setTitleText(getString(R.string.loading));
-        pDialog.setCancelable(false);
-        pDialog.show();
+        if (isPermissionGranted()) {
+            SweetAlertDialog pDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
+            pDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
+            pDialog.setTitleText(getString(R.string.loading));
+            pDialog.setCancelable(false);
+            pDialog.show();
 
-        AsyncTask.execute(() -> {
-            FileManager qrFileManager = new FileManager(getActivity());
-            String imagePath = qrFileManager.storeImage(resultbitmap);
-            if (SideBySideDialog.this.getActivity() != null)
-                SideBySideDialog.this.getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        pDialog
-                                .setTitleText(getString(R.string.saved))
-                                .setContentText(getString(R.string.image_saved))
-                                .setConfirmText(getString(R.string.dialog_ok))
-                                .setConfirmClickListener(null)
-                                .changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
-                    }
-                });
-        });
-
+            AsyncTask.execute(() -> {
+                FileManager qrFileManager = new FileManager(getActivity());
+                String imagePath = qrFileManager.storeImage(resultbitmap);
+                if (SideBySideDialog.this.getActivity() != null)
+                    SideBySideDialog.this.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            pDialog
+                                    .setTitleText(getString(R.string.saved))
+                                    .setContentText(getString(R.string.image_saved))
+                                    .setConfirmText(getString(R.string.dialog_ok))
+                                    .setConfirmClickListener(null)
+                                    .changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
+                        }
+                    });
+            });
+        } else {
+            ((MainActivity) getActivity()).setOnPermissionGranted(new MainActivity.OnPermissionGranted() {
+                @Override
+                public void onPermissionGranted() {
+                    save();
+                }
+            });
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_REQUEST_CODE);
+        }
     }
 
-
     private void share() {
-        SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
-        sweetAlertDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
-        sweetAlertDialog.setTitle(R.string.loading);
-        sweetAlertDialog.show();
-        AsyncTask.execute(() -> {
-            FileManager fileManager = new FileManager(getActivity());
-            String fileName = fileManager.storeImageWithoutBroadcast(resultbitmap);
-            shareImage(new File(fileName));
-            if (SideBySideDialog.this.getActivity() != null)
-                SideBySideDialog.this.getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        sweetAlertDialog.dismissWithAnimation();
-                    }
-                });
-        });
+        if (isPermissionGranted()) {
+            SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
+            sweetAlertDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
+            sweetAlertDialog.setTitle(R.string.loading);
+            sweetAlertDialog.show();
+            AsyncTask.execute(() -> {
+                FileManager fileManager = new FileManager(getActivity());
+                String fileName = fileManager.storeImageWithoutBroadcast(resultbitmap);
+                shareImage(new File(fileName));
+                if (SideBySideDialog.this.getActivity() != null)
+                    SideBySideDialog.this.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            sweetAlertDialog.dismissWithAnimation();
+                        }
+                    });
+            });
+        } else {
+            ((MainActivity) getActivity()).setOnPermissionGranted(new MainActivity.OnPermissionGranted() {
+                @Override
+                public void onPermissionGranted() {
+                    share();
+                }
+            });
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_REQUEST_CODE);
+        }
     }
 
     private void shareImage(File file) {
@@ -428,5 +450,17 @@ public class SideBySideDialog extends DialogFragment {
             createBitmap();
         });
         selectImageDialog.show(getFragmentManager(), SelectImageDialog.class.getSimpleName());
+    }
+
+    private boolean isPermissionGranted() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 }

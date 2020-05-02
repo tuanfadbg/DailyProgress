@@ -54,7 +54,7 @@ public class FileManager {
         File pictureFile = getOutputMediaFile();
         try {
             FileOutputStream fos = new FileOutputStream(pictureFile);
-            image.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            image.compress(Bitmap.CompressFormat.JPEG, 100, fos);
             fos.close();
             return pictureFile.getAbsolutePath();
         } catch (FileNotFoundException e) {

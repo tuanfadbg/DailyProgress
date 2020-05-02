@@ -30,6 +30,15 @@ public class CreatePasscodeDialog extends DialogFragment {
     private String passcode;
     private ConstraintLayout ctEmail;
     private EditText edtEmail;
+    private OnPasscodeSetup onPasscodeSetup;
+
+    public CreatePasscodeDialog() {
+
+    }
+
+    public CreatePasscodeDialog(OnPasscodeSetup onPasscodeSetup) {
+        this.onPasscodeSetup = onPasscodeSetup;
+    }
 
     @Override
     public void onStart() {
@@ -61,6 +70,7 @@ public class CreatePasscodeDialog extends DialogFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         this.view = view;
+        setCancelable(false);
         txtTitle = view.findViewById(R.id.textView11);
         edtPass = view.findViewById(R.id.edt_pass);
         ctEmail = view.findViewById(R.id.ct_enter_email);
@@ -197,8 +207,14 @@ public class CreatePasscodeDialog extends DialogFragment {
             @Override
             public void onDismiss(DialogInterface dialog) {
                 dismiss();
+
             }
         });
         sweetAlertDialog.show();
+    }
+
+    public interface OnPasscodeSetup {
+        void onSuccess();
+        void onFail();
     }
 }
