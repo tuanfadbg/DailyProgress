@@ -3,6 +3,9 @@ package com.tuanfadbg.progress.utils;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Environment;
 import android.util.DisplayMetrics;
 
@@ -18,6 +21,7 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import javax.activation.MimetypesFileTypeMap;
+import javax.xml.transform.dom.DOMResult;
 
 public class Utils {
     public static final String FOLDER = "Before vs After";
@@ -85,5 +89,40 @@ public class Utils {
         } catch (Exception e) {
             return true;
         }
+    }
+
+    public static int getRandomColor(int position) {
+        position = position % 16;
+        int[] color = new int[16];
+        color[0] = Color.parseColor("#ffbddc");
+        color[1] = Color.parseColor("#91c8ff");
+        color[2] = Color.parseColor("#3c9c69");
+        color[3] = Color.parseColor("#a0c29b");
+        color[4] = Color.parseColor("#00b9ae");
+        color[5] = Color.parseColor("#bd9bc2");
+        color[6] = Color.parseColor("#db4365");
+        color[7] = Color.parseColor("#fe6594");
+        color[8] = Color.parseColor("#7b77c8");
+        color[9] = Color.parseColor("#4cc3f8");
+        color[10] = Color.parseColor("#feb794");
+        color[11] = Color.parseColor("#ffdb5c");
+        color[12] = Color.parseColor("#7f86ce");
+        color[13] = Color.parseColor("#b8e0d2");
+        color[14] = Color.parseColor("#cd6f8e");
+        color[15] = Color.parseColor("#f6dfd7");
+        return color[position];
+    }
+
+    public static int convertColorToHex(String color) {
+        if (color.length() == 6)
+            color = "ff" + color;
+        return (int) Long.parseLong(color, 16);
+    }
+
+    public static Drawable getCircleDrawableByColor(int randomColor) {
+        GradientDrawable gradientDrawable = new GradientDrawable();
+        gradientDrawable.setColor(randomColor);
+        gradientDrawable.setCornerRadius(100f);
+        return gradientDrawable;
     }
 }

@@ -15,47 +15,32 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
 
 import com.bumptech.glide.Glide;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
 import com.ortiz.touchview.TouchImageView;
 import com.tuanfadbg.progress.R;
-import com.tuanfadbg.progress.database.Data;
-import com.tuanfadbg.progress.database.OnUpdateDatabase;
 import com.tuanfadbg.progress.database.item.Item;
 import com.tuanfadbg.progress.database.item.ItemSelectAsyncTask;
-import com.tuanfadbg.progress.database.tag.Tag;
-import com.tuanfadbg.progress.database.tag.TagInsertAsyncTask;
-import com.tuanfadbg.progress.database.tag.TagSelectAllAsyncTask;
-import com.tuanfadbg.progress.database.tag.TagSelectNewestAsyncTask;
 import com.tuanfadbg.progress.ui.MainActivity;
-import com.tuanfadbg.progress.ui.image_view.ImageViewDialog;
-import com.tuanfadbg.progress.ui.main_grid.OnItemClickListener;
 import com.tuanfadbg.progress.ui.select_image.SelectImageDialog;
-import com.tuanfadbg.progress.ui.settings.SettingsDialog;
 import com.tuanfadbg.progress.utils.FileManager;
 import com.tuanfadbg.progress.utils.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
@@ -65,7 +50,11 @@ public class SideBySideDialog extends DialogFragment {
     public static final String TAG = SideBySideDialog.class.getSimpleName();
     private static final int WRITE_EXTERNAL_REQUEST_CODE = 1222;
 
-    private TouchImageView imageView;
+    private static final int VIEW_TYPE_ZOOM_EACH_IMAGE = 0;
+    private static final int VIEW_TYPE_COMBINE_ONE = 1;
+
+    private TouchImageView imageView, imageView1, imageView2;
+    private ImageView imgSettings;
     private Item item;
     private List<Item> items;
     private String title, time1, time2;
@@ -73,10 +62,9 @@ public class SideBySideDialog extends DialogFragment {
     private Bitmap resultbitmap;
     private ProgressBar progressBar;
     private int tagId;
-
     private Item itemLeft;
     private Item itemRight;
-
+    private int viewType = VIEW_TYPE_COMBINE_ONE;
 
     public SideBySideDialog(Item item) {
         this.item = item;
@@ -114,7 +102,10 @@ public class SideBySideDialog extends DialogFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         imageView = view.findViewById(R.id.imageView);
+        imageView1 = view.findViewById(R.id.imageView_1);
+        imageView2 = view.findViewById(R.id.imageView_2);
         imageView.setMaxZoom(100f);
+        imgSettings = view.findViewById(R.id.img_settings);
         progressBar = view.findViewById(R.id.progressBar);
 
         if (items != null) {
@@ -139,24 +130,6 @@ public class SideBySideDialog extends DialogFragment {
                 createBitmap();
             }));
         }
-//        ItemSelectAsyncTask itemSelectAsyncTask
-//                = new ItemSelectAsyncTask(getContext());
-//        itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, tagId, datas -> {
-//            this.datas = datas;
-//            if (imgGrid.isSelected()) {
-//                dataGridAdapter.setData(datas);
-//            } else {
-//                timelineListAdapter.setData(datas);
-//            }
-//            if (datas.size() > 0) {
-//                imgEmpty.setVisibility(View.GONE);
-//            } else {
-//                imgEmpty.setVisibility(View.VISIBLE);
-//            }
-//        }));
-
-//        Bitmap bitmap1 = loadImageFromStorage();
-//        Glide.with(imageView).load(mergeBitmap())
 
         setListener(view);
     }
@@ -175,7 +148,7 @@ public class SideBySideDialog extends DialogFragment {
                 resultbitmap = mergeBitmap(itemLeft, itemRight);
                 SideBySideDialog.this.getActivity().runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
-                    Glide.with(imageView).load(resultbitmap).into(imageView);
+                    setImageByType();
                 });
             } catch (Exception e) {
 
@@ -231,11 +204,7 @@ public class SideBySideDialog extends DialogFragment {
                 break;
             }
             case 1: {
-//                if (TextUtils.isEmpty(title)) {
                 imagePaddingTop = 0f;
-//                } else {
-//                    imagePaddingTop = textsize * 2;
-//                }
                 imagePaddingBottom = (float) (textsize * 1.5);
                 break;
             }
@@ -274,11 +243,9 @@ public class SideBySideDialog extends DialogFragment {
         rect2.left += imagePaddingSide + divider;
         rect2.right += imagePaddingSide + divider;
         canvas.drawBitmap(sc, null, rect2, null);
-//        canvas.drawBitmap(sc, width / 2, imagePaddingTop, null);
 
         Typeface tf = ResourcesCompat.getFont(getContext(), R.font.lato_regular);
 
-//        Paint paint = new Paint();
         paint.setColor(Color.BLACK);
         paint.setTextSize(textsize);
         paint.setTypeface(tf);
@@ -325,6 +292,25 @@ public class SideBySideDialog extends DialogFragment {
         return null;
     }
 
+    private void setImageByType() {
+        if (viewType == VIEW_TYPE_ZOOM_EACH_IMAGE) {
+            imgSettings.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_zoom_each_image));
+            Glide.with(getContext()).load(itemLeft.file).into(imageView1);
+            Glide.with(getContext()).load(itemRight.file).into(imageView2);
+
+            imageView.setVisibility(View.GONE);
+            imageView1.setVisibility(View.VISIBLE);
+            imageView2.setVisibility(View.VISIBLE);
+        } else if (viewType == VIEW_TYPE_COMBINE_ONE) {
+            imgSettings.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_combine_one_image));
+            Glide.with(imageView).load(resultbitmap).into(imageView);
+
+            imageView.setVisibility(View.VISIBLE);
+            imageView1.setVisibility(View.GONE);
+            imageView2.setVisibility(View.GONE);
+        }
+    }
+
     private void setListener(View view) {
         view.findViewById(R.id.ic_edit).setOnClickListener(v -> {
             EditSideBySideDialog editSideBySideDialog
@@ -351,8 +337,8 @@ public class SideBySideDialog extends DialogFragment {
     }
 
     private void setting() {
-        SettingsDialog settingsDialog = new SettingsDialog();
-        settingsDialog.show(getActivity().getSupportFragmentManager(), SettingsDialog.class.getSimpleName());
+        viewType = (viewType + 1) % 2;
+        setImageByType();
     }
 
     private void save() {

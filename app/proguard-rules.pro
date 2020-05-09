@@ -34,3 +34,7 @@
 -keep class cn.pedant.SweetAlert.Rotate3dAnimation {
     public <init>(...);
 }
+
+-dontwarn com.yalantis.ucrop**
+-keep class com.yalantis.ucrop** { *; }
+-keep interface com.yalantis.ucrop** { *; }

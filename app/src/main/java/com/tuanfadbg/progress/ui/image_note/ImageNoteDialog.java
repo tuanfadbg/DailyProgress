@@ -3,9 +3,7 @@ package com.tuanfadbg.progress.ui.image_note;
 import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,23 +25,19 @@ import com.tuanfadbg.progress.database.item.ItemInsertAsyncTask;
 import com.tuanfadbg.progress.database.item.ItemUpdateAsyncTask;
 import com.tuanfadbg.progress.database.tag.Tag;
 import com.tuanfadbg.progress.database.tag.TagSelectAllAsyncTask;
+import com.tuanfadbg.progress.ui.MainActivity;
 import com.tuanfadbg.progress.ui.add_tag.AddTagDialog;
 import com.tuanfadbg.progress.utils.FileManager;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.ObservableEmitter;
-import io.reactivex.rxjava3.core.ObservableOnSubscribe;
-import io.reactivex.rxjava3.core.ObservableSource;
 import io.reactivex.rxjava3.core.Observer;
-import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -54,7 +48,7 @@ public class ImageNoteDialog extends DialogFragment {
     private ImageView imageView;
     private ChipGroup chipGroup;
     private EditText edtNote;
-    private TextView txtAddTag, txtMoreImage;
+    private TextView txtMoreImage;
     private int currentTagId;
     private OnAddNewItemListener onAddNewItemListener;
     private ArrayList<Uri> multiImageSelected;
@@ -96,7 +90,7 @@ public class ImageNoteDialog extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setStyle(DialogFragment.STYLE_NORMAL, R.style.AppTheme_FullScreenDialog);
+        setStyle(DialogFragment.STYLE_NORMAL, R.style.AppTheme_FullScreenDialog_Animation_Up);
     }
 
     @Override
@@ -112,7 +106,7 @@ public class ImageNoteDialog extends DialogFragment {
         imageView = view.findViewById(R.id.imageView);
         edtNote = view.findViewById(R.id.edt_note);
         chipGroup = view.findViewById(R.id.chip_group);
-        txtAddTag = view.findViewById(R.id.txt_add_tag);
+//        txtAddTag = view.findViewById(R.id.txt_add_tag);
         txtMoreImage = view.findViewById(R.id.txt_more_image);
 
         if (bitmap != null)
@@ -131,9 +125,13 @@ public class ImageNoteDialog extends DialogFragment {
 
         updateRecommendTag();
 
-        txtAddTag.setOnClickListener(v -> addTag());
+        view.findViewById(R.id.txt_see_more).setOnClickListener(v -> addTag());
         view.findViewById(R.id.txt_save).setOnClickListener(v -> save());
         view.findViewById(R.id.txt_delete).setOnClickListener(v -> dismiss());
+        view.findViewById(R.id.constraintLayout).setOnClickListener(v -> {});
+        view.findViewById(R.id.imageView).setOnClickListener(v -> {});
+        view.setOnClickListener(v -> dismiss());
+
     }
 
     private void updateRecommendTag() {
@@ -301,6 +299,8 @@ public class ImageNoteDialog extends DialogFragment {
             public void onSuccess() {
                 if (onItemEditedListener != null)
                     onItemEditedListener.onEdited(item);
+                if (getActivity() != null)
+                    getActivity().sendBroadcast(MainActivity.getBRItem());
                 dismiss();
             }
 

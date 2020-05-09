@@ -29,9 +29,18 @@ public class AddTagDialog extends DialogFragment {
 
     public static final String TAG = AddTagDialog.class.getSimpleName();
 
+    public AddTagDialog() {
+
+    }
+
+    public AddTagDialog(boolean showSelectTag) {
+        this.showSelectTag = showSelectTag;
+    }
+
     private EditText editText;
     private ChipGroup chipGroup;
     private OnAddTagListener onAddTagListener;
+    private boolean showSelectTag = true;
 
     @Override
     public void onStart() {
@@ -47,7 +56,7 @@ public class AddTagDialog extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setStyle(DialogFragment.STYLE_NORMAL, R.style.AppTheme_FullScreenDialog);
+        setStyle(DialogFragment.STYLE_NORMAL, R.style.AppTheme_FullScreenDialog_Animation_Up);
     }
 
     @Override
@@ -62,26 +71,6 @@ public class AddTagDialog extends DialogFragment {
         super.onViewCreated(view, savedInstanceState);
         editText = view.findViewById(R.id.editText);
         chipGroup = view.findViewById(R.id.rcv_tag);
-        TagSelectAllAsyncTask tagSelectAsyncTask = new TagSelectAllAsyncTask(getContext());
-        tagSelectAsyncTask.execute(tags -> {
-            this.tags = tags;
-            if (tags == null)
-                tags = new ArrayList<>();
-            if (tags.size() == 0) {
-                view.findViewById(R.id.txt_all_tag).setVisibility(View.GONE);
-                chipGroup.setVisibility(View.GONE);
-            } else {
-                int size = tags.size();
-                if (size > 15)
-                    size = 15;
-                for (int i = 0; i < size; i++) {
-                    Chip chip = new Chip(getContext(), null, R.attr.CustomChipChoiceStyle);
-                    chip.setId(tags.get(i).uid);
-                    chip.setText(tags.get(i).name);
-                    chipGroup.addView(chip, 0);
-                }
-            }
-        });
 
         chipGroup.setOnCheckedChangeListener((group, checkedId) -> {
             for (int i = 0; i < tags.size(); i++) {
@@ -93,8 +82,42 @@ public class AddTagDialog extends DialogFragment {
             }
         });
 
+        TagSelectAllAsyncTask tagSelectAsyncTask = new TagSelectAllAsyncTask(getContext());
+        tagSelectAsyncTask.execute(tags -> {
+            this.tags = tags;
+            if (tags == null)
+                tags = new ArrayList<>();
+
+            if (showSelectTag) {
+                if (tags.size() == 0) {
+                    view.findViewById(R.id.txt_all_tag).setVisibility(View.GONE);
+                    chipGroup.setVisibility(View.GONE);
+                } else {
+                    int size = tags.size();
+                    if (size > 15)
+                        size = 15;
+                    for (int i = 0; i < size; i++) {
+                        Chip chip = new Chip(getContext(), null, R.attr.CustomChipChoiceStyle);
+                        chip.setId(tags.get(i).uid);
+                        chip.setText(tags.get(i).name);
+                        chipGroup.addView(chip, 0);
+                    }
+                }
+            }
+        });
+
+        if (!showSelectTag) {
+            view.findViewById(R.id.txt_all_tag).setVisibility(View.GONE);
+            view.findViewById(R.id.rcv_tag).setVisibility(View.GONE);
+        }
+
         view.findViewById(R.id.txt_save).setOnClickListener(v -> save());
         view.findViewById(R.id.txt_delete).setOnClickListener(v -> dismiss());
+
+        view.setOnClickListener(v -> dismiss());
+        view.findViewById(R.id.constraintLayout).setOnClickListener(v -> {
+
+        });
     }
 
     private List<Tag> tags;
@@ -105,7 +128,7 @@ public class AddTagDialog extends DialogFragment {
             editText.setError(getString(R.string.error_tag_name_empty));
         } else {
             for (int i = 0; i < tags.size(); i++) {
-                if (newTagName.equals(tags.get(i).name)) {
+                if (newTagName.toLowerCase().equals(tags.get(i).name.toLowerCase())) {
                     editText.setError(getString(R.string.error_tag_name_duplicate));
                     return;
                 }

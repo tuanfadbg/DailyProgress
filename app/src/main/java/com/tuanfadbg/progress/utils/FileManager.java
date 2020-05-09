@@ -120,7 +120,7 @@ public class FileManager {
         return mypath;
     }
 
-    private File getNewFileInPrivateStorate() {
+    public File getNewFileInPrivateStorate() {
         ContextWrapper cw = new ContextWrapper(activity);
         File directory = cw.getDir("data", Context.MODE_PRIVATE);
         return new File(directory, "image_" + new Date().getTime() + ".jpg");

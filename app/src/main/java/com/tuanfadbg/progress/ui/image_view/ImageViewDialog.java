@@ -9,28 +9,26 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentStatePagerAdapter;
-import androidx.viewpager.widget.ViewPager;
 
 import com.bumptech.glide.Glide;
 import com.ortiz.touchview.TouchImageView;
 import com.tuanfadbg.progress.R;
+import com.tuanfadbg.progress.database.Data;
+import com.tuanfadbg.progress.database.OnUpdateDatabase;
 import com.tuanfadbg.progress.database.item.Item;
 import com.tuanfadbg.progress.database.item.ItemDeteleAsyncTask;
+import com.tuanfadbg.progress.database.item.ItemUpdateAsyncTask;
 import com.tuanfadbg.progress.ui.image_note.ImageNoteDialog;
 import com.tuanfadbg.progress.ui.side_by_side.SideBySideDialog;
 import com.tuanfadbg.progress.utils.FileManager;
+import com.yalantis.ucrop.UCrop;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,13 +36,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
-import static androidx.fragment.app.FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT;
-import static androidx.fragment.app.FragmentStatePagerAdapter.BEHAVIOR_SET_USER_VISIBLE_HINT;
+import static android.app.Activity.RESULT_OK;
 
 public class ImageViewDialog extends DialogFragment {
 
@@ -99,56 +94,12 @@ public class ImageViewDialog extends DialogFragment {
         view.findViewById(R.id.img_compare).setOnClickListener(v -> compare());
         view.findViewById(R.id.img_back).setOnClickListener(v -> dismiss());
         view.findViewById(R.id.img_edit).setOnClickListener(v -> edit());
+        view.findViewById(R.id.img_crop).setOnClickListener(v -> crop());
         view.findViewById(R.id.img_share).setOnClickListener(v -> share());
         view.findViewById(R.id.img_delete).setOnClickListener(v -> delete());
         if (!TextUtils.isEmpty(item.title))
             txtTitle.setOnClickListener(v -> viewMoreTitle());
     }
-
-//    private List<MotionEvent> motionEvents = new ArrayList<>();
-//    View.OnTouchListener onTouchListener = (v, event) -> {
-//        switch (event.getAction()) {
-//            case MotionEvent.ACTION_DOWN: {
-//                motionEvents.add(event);
-//                break;
-//            }
-//
-//            case MotionEvent.ACTION_MOVE: {
-//                motionEvents.add(event);
-//                break;
-//            }
-//
-//            case MotionEvent.ACTION_UP: {
-//                motionEvents.add(event);
-//
-//                int lastest = motionEvents.size() - 1;
-//                float deltaX = motionEvents.get(lastest).getX() - motionEvents.get(0).getX();
-//                float deltaY = motionEvents.get(lastest).getY() - motionEvents.get(0).getY();
-//                long deltaTime = motionEvents.get(lastest).getEventTime() - motionEvents.get(0).getEventTime();
-//
-//                if (deltaTime < 300) {
-//                    if (Math.abs(deltaY) < Math.abs(deltaX)) {
-//                        if (deltaX < 0) {
-//                            swipeLeft();
-//                        } else
-//                            swipeRight();
-//                    }
-//                }
-//                motionEvents.clear();
-//                break;
-//            }
-//
-//        }
-//        return false;
-//    };
-
-//    private void swipeLeft() {
-//        Log.e(TAG, "swipeLeft: " );
-//    }
-//
-//    private void swipeRight() {
-//        Log.e(TAG, "swipeRight: ");
-//    }
 
     private void viewMoreTitle() {
         if (txtTitle.getMaxLines() < 10)
@@ -164,12 +115,22 @@ public class ImageViewDialog extends DialogFragment {
                     return;
                 SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getActivity(), SweetAlertDialog.SUCCESS_TYPE);
                 sweetAlertDialog.setTitle(getString(R.string.saved));
-                sweetAlertDialog.setContentText(getString(R.string.dialog_ok));
                 sweetAlertDialog.show();
             }
         });
 
         imageNoteDialog.show(getFragmentManager(), ImageNoteDialog.class.getSimpleName());
+    }
+
+    private File tempFile;
+
+    private void crop() {
+        tempFile = new FileManager(getActivity()).getNewFileInPrivateStorate();
+        UCrop.of(Uri.fromFile(new File(item.file)), Uri.fromFile(tempFile))
+
+//                .withAspectRatio(16, 9)
+//                .withMaxResultSize(maxWidth, maxHeight)
+                .start(getContext(), this);
     }
 
     private void compare() {
@@ -251,6 +212,38 @@ public class ImageViewDialog extends DialogFragment {
                     dismiss();
                 })
                 .show();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP) {
+            final Uri resultUri = UCrop.getOutput(data);
+            File previousFile = new File(item.file);
+            if (previousFile.delete()) {
+                Glide.with(imageView).load(resultUri).into(imageView);
+                item.file = tempFile.getAbsolutePath();
+                ItemUpdateAsyncTask itemUpdateAsyncTask = new ItemUpdateAsyncTask(getContext());
+                itemUpdateAsyncTask.execute(new Data(item, new OnUpdateDatabase() {
+                    @Override
+                    public void onSuccess() {
+
+                    }
+
+                    @Override
+                    public void onFail() {
+
+                    }
+                }));
+            } else {
+                SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.ERROR_TYPE);
+                sweetAlertDialog.setTitle(R.string.unknown_error);
+                sweetAlertDialog.show();
+            }
+        } else if (resultCode == UCrop.RESULT_ERROR) {
+            Log.e(TAG, "onActivityResult: " + data.toString());
+            final Throwable cropError = UCrop.getError(data);
+        }
     }
 
     public void setItem(Item item) {

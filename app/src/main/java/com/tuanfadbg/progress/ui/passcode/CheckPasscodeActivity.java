@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
@@ -20,12 +19,18 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 
 import com.tuanfadbg.progress.R;
+import com.tuanfadbg.progress.database.item.Item;
+import com.tuanfadbg.progress.database.item.ItemSelectAsyncTask;
+import com.tuanfadbg.progress.database.tag.Tag;
+import com.tuanfadbg.progress.database.tag.TagSelectAllAsyncTask;
 import com.tuanfadbg.progress.ui.MainActivity;
 import com.tuanfadbg.progress.ui.edit_name.EnterNameDialog;
 import com.tuanfadbg.progress.ui.passcode.forgot_password.ForgotPasswordDialog;
 import com.tuanfadbg.progress.utils.SharePreferentUtils;
 import com.tuanfadbg.progress.utils.Utils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 public class CheckPasscodeActivity extends AppCompatActivity {
@@ -91,6 +96,40 @@ public class CheckPasscodeActivity extends AppCompatActivity {
                 }
             }
         }, 2300);
+
+//        ItemSelectAsyncTask itemSelectAsyncTask
+//                = new ItemSelectAsyncTask(this);
+//        itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, -1, datas -> {
+//            long lastDate = new Date().getTime();
+//            for (int i = 0; i < datas.size(); i++) {
+//                int ran = 0;
+//                while (ran < 5) {
+//                    ran = new Random().nextInt(14);
+//                }
+//                datas.get(i).createAt = lastDate - ran * 60*60*24*1000;
+//                lastDate = datas.get(i).createAt;
+//                ItemUpdateAsyncTask itemUpdateAsyncTask = new ItemUpdateAsyncTask(this);
+//                itemUpdateAsyncTask.execute(new Data(datas.get(i), new OnUpdateDatabase() {
+//                    @Override
+//                    public void onSuccess() {
+//
+//                    }
+//
+//                    @Override
+//                    public void onFail() {
+//
+//                    }
+//                }));
+//            }
+//        }));
+
+//        ItemSelectAsyncTask tagSelectAsyncTask = new ItemSelectAsyncTask(this);
+//        tagSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, -1, new ItemSelectAsyncTask.OnItemSelectedListener() {
+//            @Override
+//            public void onSelected(List<Item> datas) {
+//
+//            }
+//        }));
     }
 
     private void showCheckPasscode() {

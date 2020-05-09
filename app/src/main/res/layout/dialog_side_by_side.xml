@@ -10,7 +10,26 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@+id/img_select_left"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/img_back" />
+
+    <com.ortiz.touchview.TouchImageView
+        android:id="@+id/imageView_1"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/img_select_left"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/img_back"
+        app:layout_constraintWidth_percent="0.5" />
+
+    <com.ortiz.touchview.TouchImageView
+        android:id="@+id/imageView_2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/img_select_left"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/img_back"
+        app:layout_constraintWidth_percent="0.5" />
 
     <ImageView
         android:id="@+id/img_back"
@@ -40,11 +59,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="14dp"
-        android:tint="@android:color/black"
+        android:tint="@color/blue"
         app:layout_constraintBottom_toBottomOf="@+id/img_back"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_settings" />
+        app:srcCompat="@drawable/ic_combine_one_image" />
 
 
     <androidx.constraintlayout.widget.ConstraintLayout

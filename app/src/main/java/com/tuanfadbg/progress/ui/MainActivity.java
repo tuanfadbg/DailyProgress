@@ -1,6 +1,9 @@
 package com.tuanfadbg.progress.ui;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -46,6 +49,12 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String UPDATE_NAME = "UPDATE_NAME";
+    private static final String UPDATE_TAG = "UPDATE_TAG";
+    private static final String UPDATE_ITEM = "UPDATE_ITEM";
+
+    private static final String NAME = "NAME";
+
     TextView txtHello;
     ImageView imgGrid, imgList, imgEmpty;
     RecyclerView rcvData;
@@ -56,8 +65,11 @@ public class MainActivity extends AppCompatActivity {
     OnPermissionGranted onPermissionGranted;
 
     com.tuanfadbg.progress.utils.takephoto.TakePhotoUtils takePhotoUtils;
-    int currentTagSelected;
+    int currentTagSelected = -1;
     private List<Item> datas;
+    BroadcastReceiver brName;
+    BroadcastReceiver brTag;
+    BroadcastReceiver brItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +89,49 @@ public class MainActivity extends AppCompatActivity {
 
         setListener();
         setData();
+        brTag = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                getAllTagAndDataInside();
+            }
+        };
+        brItem = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                getAllTagAndDataInside();
+            }
+        };
+        brName = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                updateName(intent.getStringExtra(NAME));
+            }
+        };
+
+        registerReceiver(brName, new IntentFilter(UPDATE_NAME));
+        registerReceiver(brTag, new IntentFilter(UPDATE_TAG));
+        registerReceiver(brItem, new IntentFilter(UPDATE_ITEM));
+    }
+
+    public static Intent getBRItem() {
+        Intent intent = new Intent();
+        intent.setAction(UPDATE_ITEM);
+//        intent.putExtra(NAME, name);
+        return intent;
+    }
+
+    public static Intent getBRTag() {
+        Intent intent = new Intent();
+        intent.setAction(UPDATE_TAG);
+//        intent.putExtra(NAME, name);
+        return intent;
+    }
+
+    public static Intent getBRName(String name) {
+        Intent intent = new Intent();
+        intent.setAction(UPDATE_NAME);
+        intent.putExtra(NAME, name);
+        return intent;
     }
 
     private void setListener() {
@@ -161,6 +216,17 @@ public class MainActivity extends AppCompatActivity {
         name = String.format(getString(R.string.hello_s), name);
         txtHello.setText(name);
 
+        getAllTagAndDataInside();
+
+        chipGroup.setOnCheckedChangeListener((group, checkedId) -> selectTag(checkedId));
+
+        dataGridAdapter = new DataGridAdapter(this, new ArrayList<>(), this::viewImage);
+        timelineListAdapter = new TimelineListAdapter(this, new ArrayList<>(), this::viewImage);
+
+        imgGrid.performClick();
+    }
+
+    private void getAllTagAndDataInside() {
         TagSelectAllAsyncTask tagSelectAsyncTask = new TagSelectAllAsyncTask(this);
         tagSelectAsyncTask.execute(tags -> {
             if (tags == null)
@@ -186,13 +252,6 @@ public class MainActivity extends AppCompatActivity {
                 fillDataTag(tags);
             }
         });
-
-        chipGroup.setOnCheckedChangeListener((group, checkedId) -> selectTag(checkedId));
-
-        dataGridAdapter = new DataGridAdapter(this, new ArrayList<>(), this::viewImage);
-        timelineListAdapter = new TimelineListAdapter(this, new ArrayList<>(), this::viewImage);
-
-        imgGrid.performClick();
     }
 
     private void setLayoutList() {
@@ -234,7 +293,11 @@ public class MainActivity extends AppCompatActivity {
                 chip.setText(tags.get(i).name);
                 chipGroup.addView(chip, 0);
             }
-            ((Chip) chipGroup.getChildAt(0)).setChecked(true);
+            if (currentTagSelected > 0 && chipGroup.findViewById(currentTagSelected) != null) {
+                ((Chip) chipGroup.findViewById(currentTagSelected)).setChecked(true);
+            } else {
+                ((Chip) chipGroup.getChildAt(0)).setChecked(true);
+            }
         }
     }
 
@@ -296,5 +359,13 @@ public class MainActivity extends AppCompatActivity {
 
     public interface OnPermissionGranted {
         void onPermissionGranted();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(brName);
+        unregisterReceiver(brTag);
+        unregisterReceiver(brItem);
     }
 }

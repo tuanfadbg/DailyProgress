@@ -20,6 +20,28 @@
         <item name="actionMenuTextColor">@color/colorAccent</item>
     </style>
 
+    <style name="AppTheme.FullScreenDialog.Animation.Up" parent="AppTheme.FullScreenDialog">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowAnimationStyle">@style/MyAnimation.Window</item>
+    </style>
+
+    <style name="AppTheme.FullScreenDialog.Animation.Left" parent="AppTheme.FullScreenDialog">
+<!--        <item name="android:windowActionBar">false</item>-->
+<!--        <item name="android:windowFullscreen">true</item>-->
+        <item name="android:windowAnimationStyle">@style/MyAnimation.Window.SlideLeft</item>
+    </style>
+
+    <style name="MyAnimation.Window" parent="@android:style/Animation.Activity">
+        <item name="android:windowEnterAnimation">@anim/anim_in_slide_up</item>
+        <item name="android:windowExitAnimation">@anim/anim_out_slide_down</item>
+    </style>
+
+    <style name="MyAnimation.Window.SlideLeft" parent="@android:style/Animation.Activity">
+        <item name="android:windowEnterAnimation">@anim/anim_in_slide_right</item>
+        <item name="android:windowExitAnimation">@anim/anim_out_slide_left</item>
+    </style>
+
     <style name="itemPassCode">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">match_parent</item>

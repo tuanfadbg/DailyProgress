@@ -21,6 +21,8 @@ import com.tuanfadbg.progress.ui.MainActivity;
 import com.tuanfadbg.progress.ui.edit_name.EditNameDialog;
 import com.tuanfadbg.progress.ui.image_note.ImageNoteDialog;
 import com.tuanfadbg.progress.ui.passcode.CreatePasscodeDialog;
+import com.tuanfadbg.progress.ui.tag_manager.TagManagerAdapter;
+import com.tuanfadbg.progress.ui.tag_manager.TagManagerDialog;
 import com.tuanfadbg.progress.utils.Constants;
 import com.tuanfadbg.progress.utils.SharePreferentUtils;
 import com.tuanfadbg.progress.utils.Utils;
@@ -52,7 +54,7 @@ public class SettingsDialog extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setStyle(DialogFragment.STYLE_NORMAL, R.style.AppTheme_FullScreenDialog);
+        setStyle(DialogFragment.STYLE_NORMAL, R.style.AppTheme_FullScreenDialog_Animation_Left);
     }
 
     @Override
@@ -121,7 +123,13 @@ public class SettingsDialog extends DialogFragment {
             }
         });
         ctPasscodeSetting.setOnClickListener(v -> showPassCodeSettings(false));
+        view.findViewById(R.id.ct_tag_manager).setOnClickListener(v -> showTagManager());
         view.findViewById(R.id.txt_upgrade).setOnClickListener(v -> upgradePremium());
+    }
+
+    private void showTagManager() {
+        TagManagerDialog tagManagerDialog = new TagManagerDialog();
+        tagManagerDialog.show(getChildFragmentManager(), TagManagerDialog.class.getSimpleName());
     }
 
     private void importPhoto() {
