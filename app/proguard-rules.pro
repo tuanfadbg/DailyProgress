@@ -35,6 +35,8 @@
     public <init>(...);
 }
 
+-keep class com.tuanfadbg.** { *; }
+
 -dontwarn com.yalantis.ucrop**
 -keep class com.yalantis.ucrop** { *; }
 -keep interface com.yalantis.ucrop** { *; }

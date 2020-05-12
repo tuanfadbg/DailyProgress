@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.tuanfadbg.progress">
+    package="com.tuanfadbg.trackprogress.beforeafterimage">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
-        android:name="com.tuanfadbg.progress.MyApplication"
+        android:name="com.tuanfadbg.trackprogress.MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -19,7 +19,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".ui.MainActivity"
+            android:name="com.tuanfadbg.trackprogress.ui.MainActivity"
             android:screenOrientation="portrait">
             <!--            <intent-filter>-->
             <!--                <action android:name="android.intent.action.MAIN" />-->
@@ -28,7 +28,7 @@
             <!--            </intent-filter>-->
         </activity>
         <activity
-            android:name=".ui.passcode.CheckPasscodeActivity"
+            android:name="com.tuanfadbg.trackprogress.ui.passcode.CheckPasscodeActivity"
             android:noHistory="true"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -45,7 +45,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.tuanfadbg.progress"
+            android:authorities="com.tuanfadbg.trackprogress"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

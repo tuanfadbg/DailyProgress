@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Progress</string>
+    <string name="app_name">Track Progress</string>
     <string name="today">Today</string>
     <string name="private_image">Private Image</string>
     <string name="say_something">Say something!</string>
@@ -64,4 +64,8 @@
     <string name="delete_image_tag">Delete the image belonging to that tag</string>
     <string name="photo_no_tag">Some photos do not have tags</string>
     <string name="view_image"><u>View Images</u></string>
+    <string name="move">Move</string>
+    <string name="select_all">All</string>
+    <string name="no_images_selected">No images selected</string>
+    <string name="image_move_to_tag">Images will belong to the selected tag</string>
 </resources>

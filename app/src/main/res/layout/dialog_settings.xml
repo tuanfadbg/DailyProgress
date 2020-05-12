@@ -170,13 +170,13 @@
                     android:id="@+id/imageView55"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginRight="8dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginRight="10dp"
                     android:tint="@color/color_black_gray"
                     app:layout_constraintBottom_toBottomOf="@+id/textView99"
                     app:layout_constraintEnd_toStartOf="@+id/textView99"
                     app:layout_constraintTop_toTopOf="@+id/textView99"
-                    app:srcCompat="@drawable/ic_passcode_setting" />
+                    app:srcCompat="@drawable/ic_tag" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -193,13 +193,13 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="50dp"
                     android:layout_marginLeft="50dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
                     android:layout_marginTop="16dp"
                     android:layout_marginBottom="16dp"
                     android:fontFamily="@font/lato_medium"
                     android:text="@string/export_all_image_to_gallery"
                     android:textColor="@color/color_black_gray"
                     android:textSize="15sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
@@ -207,8 +207,8 @@
                     android:id="@+id/imageView6"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="10dp"
-                    android:layout_marginRight="10dp"
+                    android:layout_marginEnd="11dp"
+                    android:layout_marginRight="11dp"
                     android:tint="@color/color_black_gray"
                     app:layout_constraintBottom_toBottomOf="@+id/textView10"
                     app:layout_constraintEnd_toStartOf="@+id/textView10"
@@ -245,8 +245,8 @@
                     android:id="@+id/imageView7"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="10dp"
-                    android:layout_marginRight="10dp"
+                    android:layout_marginEnd="11dp"
+                    android:layout_marginRight="11dp"
                     android:rotation="180"
                     android:tint="@color/color_black_gray"
                     app:layout_constraintBottom_toBottomOf="@+id/textView12"
