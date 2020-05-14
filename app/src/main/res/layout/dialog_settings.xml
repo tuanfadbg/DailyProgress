@@ -344,6 +344,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/lato_regular"
                     android:text="$"
+                    android:visibility="gone"
                     android:textColor="@android:color/white"
                     android:textSize="13sp"
                     app:layout_constraintEnd_toStartOf="@+id/txt_money"

@@ -11,9 +11,22 @@ import android.view.ViewGroup;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.DialogFragment;
 
+import com.android.billingclient.api.AcknowledgePurchaseParams;
+import com.android.billingclient.api.AcknowledgePurchaseResponseListener;
+import com.android.billingclient.api.BillingClient;
+import com.android.billingclient.api.BillingClientStateListener;
+import com.android.billingclient.api.BillingFlowParams;
+import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.PurchaseHistoryRecord;
+import com.android.billingclient.api.PurchasesUpdatedListener;
+import com.android.billingclient.api.SkuDetails;
+import com.android.billingclient.api.SkuDetailsParams;
+import com.android.billingclient.api.SkuDetailsResponseListener;
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
 import com.tuanfadbg.trackprogress.ui.MainActivity;
 import com.tuanfadbg.trackprogress.ui.edit_name.EditNameDialog;
@@ -76,8 +89,11 @@ public class SettingsDialog extends DialogFragment {
         if (TextUtils.isEmpty(name))
             name = getString(R.string.enter_your_name);
         txtName.setText(name);
+
         setLayout();
         setListener(view);
+
+        getPrice();
     }
 
     private void setLayout() {
@@ -121,6 +137,75 @@ public class SettingsDialog extends DialogFragment {
         ctPasscodeSetting.setOnClickListener(v -> showPassCodeSettings(false));
         view.findViewById(R.id.ct_tag_manager).setOnClickListener(v -> showTagManager());
         view.findViewById(R.id.txt_upgrade).setOnClickListener(v -> upgradePremium());
+    }
+
+    private BillingClient billingClient;
+    SkuDetails productSku;
+
+    private void getPrice() {
+        String mySku = "progress_1_usd";
+//        String mySku = "android.test.purchased";
+        billingClient = BillingClient.newBuilder(getContext()).enablePendingPurchases().setListener(new PurchasesUpdatedListener() {
+            @Override
+            public void onPurchasesUpdated(BillingResult billingResult, @Nullable List<Purchase> purchases) {
+                if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
+                        && purchases != null) {
+                    for (Purchase purchase : purchases) {
+                        handlePurchase(purchase);
+                    }
+                } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) {
+                    // Handle an error caused by a user cancelling the purchase flow.
+                } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
+                    grantEtitlement();
+                }
+            }
+        }).build();
+        billingClient.startConnection(new BillingClientStateListener() {
+            @Override
+            public void onBillingSetupFinished(BillingResult billingResult) {
+                if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                    List<String> skuList = new ArrayList<>();
+                    skuList.add(mySku);
+
+                    SkuDetailsParams.Builder params = SkuDetailsParams.newBuilder();
+                    params.setSkusList(skuList).setType(BillingClient.SkuType.INAPP);
+                    billingClient.querySkuDetailsAsync(params.build(),
+                            new SkuDetailsResponseListener() {
+                                @Override
+                                public void onSkuDetailsResponse(BillingResult billingResult,
+                                                                 List<SkuDetails> skuDetailsList) {
+                                    if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && skuDetailsList != null) {
+                                        for (SkuDetails skuDetails : skuDetailsList) {
+                                            String sku = skuDetails.getSku();
+                                            String price = skuDetails.getPrice();
+                                            productSku = skuDetails;
+                                            if (mySku.equals(sku)) {
+                                                ((TextView) view.findViewById(R.id.txt_money)).setText(price);
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                }
+
+                billingClient.queryPurchaseHistoryAsync(BillingClient.SkuType.INAPP, (billingResult1, purchasesList) -> {
+                    if (billingResult1.getResponseCode() == BillingClient.BillingResponseCode.OK
+                            && purchasesList != null) {
+                        for (PurchaseHistoryRecord purchase : purchasesList) {
+                            if (purchase.getSku().equals(mySku)) {
+                                grantEtitlement();
+                            }
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onBillingServiceDisconnected() {
+                // Try to restart the connection on the next request to
+                // Google Play by calling the startConnection() method.
+            }
+        });
     }
 
     private void showTagManager() {
@@ -198,25 +283,62 @@ public class SettingsDialog extends DialogFragment {
     }
 
     private void showPassCodeSettings(boolean setEnablePassCodeAfterDone) {
-        CreatePasscodeDialog createPasscodeDialog = new CreatePasscodeDialog(new CreatePasscodeDialog.OnPasscodeSetup() {
-            @Override
-            public void onSuccess() {
-                if (setEnablePassCodeAfterDone) {
-                    SharePreferentUtils.setPasscodeEnable(true);
-                    switchPassword.setChecked(true);
+        if (SharePreferentUtils.isPremium()) {
+            CreatePasscodeDialog createPasscodeDialog = new CreatePasscodeDialog(new CreatePasscodeDialog.OnPasscodeSetup() {
+                @Override
+                public void onSuccess() {
+                    if (setEnablePassCodeAfterDone) {
+                        SharePreferentUtils.setPasscodeEnable(true);
+                        switchPassword.setChecked(true);
+                    }
                 }
-            }
 
-            @Override
-            public void onFail() {
-                SharePreferentUtils.setPasscodeEnable(false);
-                switchPassword.setChecked(false);
+                @Override
+                public void onFail() {
+                    SharePreferentUtils.setPasscodeEnable(false);
+                    switchPassword.setChecked(false);
+                }
+            });
+            createPasscodeDialog.show(getFragmentManager(), CreatePasscodeDialog.class.getSimpleName());
+        }
+    }
+
+    AcknowledgePurchaseResponseListener acknowledgePurchaseResponseListener = new AcknowledgePurchaseResponseListener() {
+        @Override
+        public void onAcknowledgePurchaseResponse(BillingResult billingResult) {
+
+        }
+    };
+
+    private void handlePurchase(Purchase purchase) {
+        if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+            // Grant entitlement to the user.
+            grantEtitlement();
+            // Acknowledge the purchase if it hasn't already been acknowledged.
+            if (!purchase.isAcknowledged()) {
+                AcknowledgePurchaseParams acknowledgePurchaseParams =
+                        AcknowledgePurchaseParams.newBuilder()
+                                .setPurchaseToken(purchase.getPurchaseToken())
+                                .build();
+                billingClient.acknowledgePurchase(acknowledgePurchaseParams, acknowledgePurchaseResponseListener);
             }
-        });
-        createPasscodeDialog.show(getFragmentManager(), CreatePasscodeDialog.class.getSimpleName());
+        }
     }
 
     private void upgradePremium() {
+        if (productSku != null) {
+            BillingFlowParams flowParams = BillingFlowParams.newBuilder()
+                    .setSkuDetails(productSku)
+                    .build();
+
+            BillingResult billingResult = billingClient.launchBillingFlow(getActivity(), flowParams);
+//            if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.)
+        }
+
+
+    }
+
+    private void grantEtitlement() {
         SharePreferentUtils.setPremium(true);
         setLayout();
     }
