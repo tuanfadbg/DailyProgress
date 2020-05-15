@@ -184,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
                     sweetAlertDialog.setTitle(R.string.error_no_image_on_tag);
                 else
                     sweetAlertDialog.setTitle(R.string.error_no_image);
-                sweetAlertDialog.setConfirmText(getString(R.string.dialog_ok));
+                sweetAlertDialog.setConfirmText(getString(R.string.str_ok));
                 sweetAlertDialog.show();
                 return;
             }

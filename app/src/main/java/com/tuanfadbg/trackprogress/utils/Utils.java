@@ -22,6 +22,7 @@ import javax.activation.MimetypesFileTypeMap;
 
 public class Utils {
     public static final String FOLDER = "Before vs After";
+    public static final String EXPORT_FOLDER = "Export";
 
     public static int diffDay(long first, long end) {
         long diffInMillies = first - end;
@@ -52,6 +53,10 @@ public class Utils {
 
     public static String getFolderPath() {
         return Environment.getExternalStorageDirectory().getPath() + "/" + Utils.FOLDER;
+    }
+
+    public static String getExportFolderPath() {
+        return Environment.getExternalStorageDirectory().getPath() + "/" + Utils.FOLDER + "/" + Utils.EXPORT_FOLDER;
     }
 
     public static boolean isGraintedPermission(Context activity, String permission) {

@@ -359,7 +359,7 @@ public class SideBySideDialog extends DialogFragment {
                             pDialog
                                     .setTitleText(getString(R.string.saved))
                                     .setContentText(getString(R.string.image_saved))
-                                    .setConfirmText(getString(R.string.dialog_ok))
+                                    .setConfirmText(getString(R.string.str_ok))
                                     .setConfirmClickListener(null)
                                     .changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
                         }

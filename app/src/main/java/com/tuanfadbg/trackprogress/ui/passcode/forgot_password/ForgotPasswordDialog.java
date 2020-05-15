@@ -105,7 +105,7 @@ public class ForgotPasswordDialog extends DialogFragment {
     private void showDialogSuccess() {
         SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getActivity(), SweetAlertDialog.SUCCESS_TYPE);
         sweetAlertDialog.setTitle(R.string.send_email_forgot_password_success);
-        sweetAlertDialog.setConfirmText(getString(R.string.dialog_ok));
+        sweetAlertDialog.setConfirmText(getString(R.string.str_ok));
         sweetAlertDialog.setOnDismissListener(dialog -> dismiss());
         sweetAlertDialog.show();
     }
@@ -113,7 +113,7 @@ public class ForgotPasswordDialog extends DialogFragment {
     private void showDialogFail() {
         SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getActivity(), SweetAlertDialog.ERROR_TYPE);
         sweetAlertDialog.setTitle(R.string.send_email_forgot_password_fail);
-        sweetAlertDialog.setConfirmText(getString(R.string.dialog_ok));
+        sweetAlertDialog.setConfirmText(getString(R.string.str_ok));
         sweetAlertDialog.setOnDismissListener(dialog -> dismiss());
         sweetAlertDialog.show();
     }

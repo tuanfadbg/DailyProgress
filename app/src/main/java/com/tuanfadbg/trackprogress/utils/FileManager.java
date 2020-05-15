@@ -15,11 +15,13 @@ import androidx.core.app.ActivityCompat;
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -69,7 +71,7 @@ public class FileManager {
 
         String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmms").format(new Date());
         File mediaFile;
-        String mImageName = activity.getString(R.string.app_name) + timeStamp + ".jpg";
+        String mImageName = "Track_Progress_" + timeStamp + ".jpg";
         mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
         return mediaFile;
     }
@@ -80,6 +82,21 @@ public class FileManager {
             if (!f.mkdir()) {
                 Toast.makeText(activity, activity.getString(R.string.folder_cant_be_created), Toast.LENGTH_SHORT).show();
             }
+    }
+
+    public void createExportFolder() {
+        createFolder();
+        File f = new File(Utils.getExportFolderPath());
+        if (!f.exists())
+            if (!f.mkdir()) {
+                Toast.makeText(activity, activity.getString(R.string.folder_cant_be_created), Toast.LENGTH_SHORT).show();
+            }
+    }
+
+    public File getExportFileFromSourceFile(File sourceFile) {
+        File mediaStorageDir = new File(Utils.getExportFolderPath());
+        File mediaFile = new File(mediaStorageDir.getPath() + File.separator + sourceFile.getName());
+        return mediaFile;
     }
 
     public boolean checkAndGraintPermission() {
@@ -178,5 +195,30 @@ public class FileManager {
         }
 
         return targetFile;
+    }
+
+    public  void copyFile(File sourceFile, File destFile) throws IOException {
+        if (!destFile.getParentFile().exists())
+            destFile.getParentFile().mkdirs();
+
+        if (!destFile.exists()) {
+            destFile.createNewFile();
+        }
+
+        FileChannel source = null;
+        FileChannel destination = null;
+
+        try {
+            source = new FileInputStream(sourceFile).getChannel();
+            destination = new FileOutputStream(destFile).getChannel();
+            destination.transferFrom(source, 0, source.size());
+        } finally {
+            if (source != null) {
+                source.close();
+            }
+            if (destination != null) {
+                destination.close();
+            }
+        }
     }
 }

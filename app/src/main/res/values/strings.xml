@@ -68,4 +68,7 @@
     <string name="select_all">All</string>
     <string name="no_images_selected">No images selected</string>
     <string name="image_move_to_tag">Images will belong to the selected tag</string>
+    <string name="export_success">Successful image export</string>
+    <string name="str_ok">OK</string>
+    <string name="ask_export_image">Are you sure you want to export all image to folder</string>
 </resources>

@@ -28,15 +28,20 @@ import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
 import com.android.billingclient.api.SkuDetailsResponseListener;
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
+import com.tuanfadbg.trackprogress.database.item.Item;
+import com.tuanfadbg.trackprogress.database.item.ItemSelectAsyncTask;
 import com.tuanfadbg.trackprogress.ui.MainActivity;
 import com.tuanfadbg.trackprogress.ui.edit_name.EditNameDialog;
 import com.tuanfadbg.trackprogress.ui.image_note.ImageNoteDialog;
 import com.tuanfadbg.trackprogress.ui.passcode.CreatePasscodeDialog;
 import com.tuanfadbg.trackprogress.ui.tag_manager.TagManagerDialog;
+import com.tuanfadbg.trackprogress.utils.FileManager;
 import com.tuanfadbg.trackprogress.utils.SharePreferentUtils;
 import com.tuanfadbg.trackprogress.utils.Utils;
 import com.tuanfadbg.trackprogress.utils.takephoto.TakePhotoCallback;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,6 +53,8 @@ public class SettingsDialog extends DialogFragment {
     private TextView txtName;
     private ConstraintLayout ctPasscode, ctPasscodeSetting, ctExport;
     private Switch switchPassword;
+    private TextView txtLocation;
+    private String FOLDER = String.format("Storage/%s/%s", Utils.FOLDER, Utils.EXPORT_FOLDER);
 
     @Override
     public void onStart() {
@@ -84,6 +91,7 @@ public class SettingsDialog extends DialogFragment {
         ctPasscodeSetting = view.findViewById(R.id.ct_password_settings);
         ctExport = view.findViewById(R.id.ct_export);
         switchPassword = view.findViewById(R.id.switch_passcode);
+        txtLocation = view.findViewById(R.id.txt_location);
 
         String name = SharePreferentUtils.getName(false);
         if (TextUtils.isEmpty(name))
@@ -92,7 +100,6 @@ public class SettingsDialog extends DialogFragment {
 
         setLayout();
         setListener(view);
-
         getPrice();
     }
 
@@ -109,6 +116,8 @@ public class SettingsDialog extends DialogFragment {
             view.findViewById(R.id.ct_premium).setVisibility(View.GONE);
             view.findViewById(R.id.txt_upgrade).setVisibility(View.GONE);
         }
+
+        txtLocation.setText(FOLDER);
     }
 
     private void setListener(View view) {
@@ -137,6 +146,7 @@ public class SettingsDialog extends DialogFragment {
         ctPasscodeSetting.setOnClickListener(v -> showPassCodeSettings(false));
         view.findViewById(R.id.ct_tag_manager).setOnClickListener(v -> showTagManager());
         view.findViewById(R.id.txt_upgrade).setOnClickListener(v -> upgradePremium());
+        ctExport.setOnClickListener(v -> exportAll());
     }
 
     private BillingClient billingClient;
@@ -270,7 +280,7 @@ public class SettingsDialog extends DialogFragment {
         SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getActivity(), SweetAlertDialog.WARNING_TYPE);
         sweetAlertDialog.setTitle(R.string.import_image);
         sweetAlertDialog.setContentText(getString(R.string.import_not_image));
-        sweetAlertDialog.setConfirmText(getString(R.string.dialog_ok));
+        sweetAlertDialog.setConfirmText(getString(R.string.str_ok));
         sweetAlertDialog.show();
     }
 
@@ -278,7 +288,7 @@ public class SettingsDialog extends DialogFragment {
         SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getActivity(), SweetAlertDialog.SUCCESS_TYPE);
         sweetAlertDialog.setTitle(R.string.import_image);
         sweetAlertDialog.setContentText(getString(R.string.import_success));
-        sweetAlertDialog.setConfirmText(getString(R.string.dialog_ok));
+        sweetAlertDialog.setConfirmText(getString(R.string.str_ok));
         sweetAlertDialog.show();
     }
 
@@ -300,6 +310,56 @@ public class SettingsDialog extends DialogFragment {
                 }
             });
             createPasscodeDialog.show(getFragmentManager(), CreatePasscodeDialog.class.getSimpleName());
+        }
+    }
+
+    private void exportAll() {
+        if (SharePreferentUtils.isPremium()) {
+            SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.WARNING_TYPE);
+            sweetAlertDialog.setTitle(getString(R.string.ask_export_image));
+            sweetAlertDialog.setContentText(FOLDER);
+            sweetAlertDialog.setConfirmText(getString(R.string.str_ok));
+            sweetAlertDialog.setCancelText(getString(R.string.cancel));
+            sweetAlertDialog.setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+                @Override
+                public void onClick(SweetAlertDialog sweetAlertDialog) {
+                    sweetAlertDialog.changeAlertType(SweetAlertDialog.PROGRESS_TYPE);
+                    sweetAlertDialog.setTitle("");
+                    sweetAlertDialog.setContentText("");
+                    sweetAlertDialog.hideConfirmButton();
+                    sweetAlertDialog.showCancelButton(false);
+                    ItemSelectAsyncTask itemSelectAsyncTask = new ItemSelectAsyncTask(getContext());
+                    itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, null, new ItemSelectAsyncTask.OnItemSelectedListener() {
+                        @Override
+                        public void onSelected(List<Item> datas) {
+                            copyAllImageToNewFolder(datas);
+                            sweetAlertDialog.dismiss();
+                            SweetAlertDialog dialogSuccess = new SweetAlertDialog(getContext(), SweetAlertDialog.SUCCESS_TYPE);
+                            dialogSuccess.setTitle(getString(R.string.export_success));
+                            dialogSuccess.setConfirmText(getString(R.string.str_ok));
+                            dialogSuccess.show();
+                        }
+                    }));
+                }
+            });
+            sweetAlertDialog.show();
+
+        }
+    }
+
+    private void copyAllImageToNewFolder(List<Item> datas) {
+        if (getActivity() != null) {
+            FileManager fileManager = new FileManager(getActivity());
+            fileManager.createExportFolder();
+            for (Item item : datas) {
+                File sourceFile = new File(item.file);
+                File desFile = fileManager.getExportFileFromSourceFile(sourceFile);
+                try {
+                    fileManager.copyFile(sourceFile, desFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
