@@ -213,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setData() {
         String name = SharePreferentUtils.getName(true);
-        name = String.format(getString(R.string.hello_s), name);
+        name = String.format(getString(R.string.hello_s) + ", %s", name);
         txtHello.setText(name);
 
         getAllTagAndDataInside();
@@ -343,7 +343,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void updateName(String name) {
-        name = String.format(getString(R.string.hello_s), name);
+        name = String.format(getString(R.string.hello_s) + ", %s", name);
         txtHello.setText(name);
     }
 

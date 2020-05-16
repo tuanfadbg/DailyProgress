@@ -5,9 +5,11 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
@@ -220,5 +222,17 @@ public class FileManager {
                 destination.close();
             }
         }
+    }
+
+    public static boolean isWriteStoragePermissionGranted(Activity activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (activity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -39,7 +39,7 @@
     <string name="import_image">Import image</string>
     <string name="premium">Premium</string>
     <string name="no_ads">No ads</string>
-    <string name="hello_s">Hello, %s</string>
+    <string name="hello_s">Hello</string>
     <string name="enter_passcode">Enter Passcode</string>
     <string name="reenter_password">Reenter Passcode</string>
     <string name="passcode_successfully">Your passcode was set successfully</string>

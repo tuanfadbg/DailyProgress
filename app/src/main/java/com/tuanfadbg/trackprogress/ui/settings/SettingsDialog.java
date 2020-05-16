@@ -315,36 +315,45 @@ public class SettingsDialog extends DialogFragment {
 
     private void exportAll() {
         if (SharePreferentUtils.isPremium()) {
-            SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.WARNING_TYPE);
-            sweetAlertDialog.setTitle(getString(R.string.ask_export_image));
-            sweetAlertDialog.setContentText(FOLDER);
-            sweetAlertDialog.setConfirmText(getString(R.string.str_ok));
-            sweetAlertDialog.setCancelText(getString(R.string.cancel));
-            sweetAlertDialog.setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+            ItemSelectAsyncTask itemSelectAsyncTask = new ItemSelectAsyncTask(getContext());
+            itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, null, new ItemSelectAsyncTask.OnItemSelectedListener() {
                 @Override
-                public void onClick(SweetAlertDialog sweetAlertDialog) {
-                    sweetAlertDialog.changeAlertType(SweetAlertDialog.PROGRESS_TYPE);
-                    sweetAlertDialog.setTitle("");
-                    sweetAlertDialog.setContentText("");
-                    sweetAlertDialog.hideConfirmButton();
-                    sweetAlertDialog.showCancelButton(false);
-                    ItemSelectAsyncTask itemSelectAsyncTask = new ItemSelectAsyncTask(getContext());
-                    itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, null, new ItemSelectAsyncTask.OnItemSelectedListener() {
-                        @Override
-                        public void onSelected(List<Item> datas) {
-                            copyAllImageToNewFolder(datas);
-                            sweetAlertDialog.dismiss();
-                            SweetAlertDialog dialogSuccess = new SweetAlertDialog(getContext(), SweetAlertDialog.SUCCESS_TYPE);
-                            dialogSuccess.setTitle(getString(R.string.export_success));
-                            dialogSuccess.setConfirmText(getString(R.string.str_ok));
-                            dialogSuccess.show();
-                        }
-                    }));
+                public void onSelected(List<Item> datas) {
+                    if (datas.size() > 0) {
+                        SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.WARNING_TYPE);
+                        sweetAlertDialog.setTitle(getString(R.string.ask_export_image));
+                        sweetAlertDialog.setContentText(FOLDER);
+                        sweetAlertDialog.setConfirmText(getString(R.string.str_ok));
+                        sweetAlertDialog.setCancelText(getString(R.string.cancel));
+                        sweetAlertDialog.setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+                            @Override
+                            public void onClick(SweetAlertDialog sweetAlertDialog) {
+                                sweetAlertDialog.changeAlertType(SweetAlertDialog.PROGRESS_TYPE);
+                                sweetAlertDialog.setTitle("");
+                                sweetAlertDialog.setContentText("");
+                                sweetAlertDialog.hideConfirmButton();
+                                sweetAlertDialog.showCancelButton(false);
+                                copyAllImageToNewFolder(datas);
+                                sweetAlertDialog.dismiss();
+                                SweetAlertDialog dialogSuccess = new SweetAlertDialog(getContext(), SweetAlertDialog.SUCCESS_TYPE);
+                                dialogSuccess.setTitle(getString(R.string.export_success));
+                                dialogSuccess.setConfirmText(getString(R.string.str_ok));
+                                dialogSuccess.show();
+                            }
+                        });
+                        sweetAlertDialog.show();
+                    } else {
+                        showDialogNoImage();
+                    }
                 }
-            });
-            sweetAlertDialog.show();
-
+            }));
         }
+    }
+
+    private void showDialogNoImage() {
+        SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.WARNING_TYPE);
+        sweetAlertDialog.setTitle(R.string.error_no_image);
+        sweetAlertDialog.show();
     }
 
     private void copyAllImageToNewFolder(List<Item> datas) {

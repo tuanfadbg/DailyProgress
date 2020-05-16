@@ -1,5 +1,6 @@
 package com.tuanfadbg.trackprogress.ui.image_view;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.content.Intent;
 import android.net.Uri;
@@ -25,6 +26,7 @@ import com.tuanfadbg.trackprogress.database.OnUpdateDatabase;
 import com.tuanfadbg.trackprogress.database.item.Item;
 import com.tuanfadbg.trackprogress.database.item.ItemDeteleAsyncTask;
 import com.tuanfadbg.trackprogress.database.item.ItemUpdateAsyncTask;
+import com.tuanfadbg.trackprogress.ui.MainActivity;
 import com.tuanfadbg.trackprogress.ui.image_note.ImageNoteDialog;
 import com.tuanfadbg.trackprogress.ui.side_by_side.SideBySideDialog;
 import com.tuanfadbg.trackprogress.utils.FileManager;
@@ -44,6 +46,7 @@ import static android.app.Activity.RESULT_OK;
 public class ImageViewDialog extends DialogFragment {
 
     private static final String TAG = ImageNoteDialog.class.getSimpleName();
+    private static final int WRITE_EXTERNAL_REQUEST_CODE = 1222;
     private TouchImageView imageView;
     private Item item;
     private ConstraintLayout ctBottom;
@@ -158,33 +161,44 @@ public class ImageViewDialog extends DialogFragment {
     }
 
     private void share() {
-        SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
-        sweetAlertDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
-        sweetAlertDialog.setTitle(R.string.loading);
-        sweetAlertDialog.show();
+        if (FileManager.isWriteStoragePermissionGranted(getActivity())) {
+            SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
+            sweetAlertDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
+            sweetAlertDialog.setTitle(R.string.loading);
+            sweetAlertDialog.show();
 
-        FileManager fileManager = new FileManager(getActivity());
-        File src = new File(item.file);
-        fileManager.createFolder();
-        File dest = fileManager.getOutputMediaFile();
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    copyFileUsingStream(src, dest);
-                } catch (IOException e) {
-                    e.printStackTrace();
+            FileManager fileManager = new FileManager(getActivity());
+            File src = new File(item.file);
+            fileManager.createFolder();
+            File dest = fileManager.getOutputMediaFile();
+            AsyncTask.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        copyFileUsingStream(src, dest);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    share(dest);
+                    if (ImageViewDialog.this.getActivity() != null)
+                        ImageViewDialog.this.getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                sweetAlertDialog.dismissWithAnimation();
+                            }
+                        });
                 }
-                share(dest);
-                if (ImageViewDialog.this.getActivity() != null)
-                    ImageViewDialog.this.getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            sweetAlertDialog.dismissWithAnimation();
-                        }
-                    });
-            }
-        });
+            });
+        }
+        else {
+            ((MainActivity) getActivity()).setOnPermissionGranted(new MainActivity.OnPermissionGranted() {
+                @Override
+                public void onPermissionGranted() {
+                    share();
+                }
+            });
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_REQUEST_CODE);
+        }
     }
 
     private void share(File dest) {

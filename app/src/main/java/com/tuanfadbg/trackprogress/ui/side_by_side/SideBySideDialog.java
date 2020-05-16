@@ -342,7 +342,7 @@ public class SideBySideDialog extends DialogFragment {
     }
 
     private void save() {
-        if (isPermissionGranted()) {
+        if (FileManager.isWriteStoragePermissionGranted(getActivity())) {
             SweetAlertDialog pDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
             pDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
             pDialog.setTitleText(getString(R.string.loading));
@@ -377,7 +377,7 @@ public class SideBySideDialog extends DialogFragment {
     }
 
     private void share() {
-        if (isPermissionGranted()) {
+        if (FileManager.isWriteStoragePermissionGranted(getActivity())) {
             SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
             sweetAlertDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
             sweetAlertDialog.setTitle(R.string.loading);
@@ -436,17 +436,5 @@ public class SideBySideDialog extends DialogFragment {
             createBitmap();
         });
         selectImageDialog.show(getFragmentManager(), SelectImageDialog.class.getSimpleName());
-    }
-
-    private boolean isPermissionGranted() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-        return true;
     }
 }
