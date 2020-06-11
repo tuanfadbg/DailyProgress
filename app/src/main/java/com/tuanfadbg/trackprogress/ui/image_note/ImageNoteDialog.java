@@ -15,6 +15,7 @@ import android.widget.Toast;
 import androidx.fragment.app.DialogFragment;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.signature.ObjectKey;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
@@ -31,6 +32,7 @@ import com.tuanfadbg.trackprogress.utils.FileManager;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -116,9 +118,9 @@ public class ImageNoteDialog extends DialogFragment {
                 txtMoreImage.setVisibility(View.VISIBLE);
                 txtMoreImage.setText(String.format(Locale.US, "+%d", multiImageSelected.size() - 1));
             }
-            Glide.with(this).load(multiImageSelected.get(0)).into(imageView);
+            Glide.with(this).load(multiImageSelected.get(0)).signature(new ObjectKey(new Date().getTime())).into(imageView);
         } else if (item != null) {
-            Glide.with(this).load(item.file).into(imageView);
+            Glide.with(this).load(item.file).signature(new ObjectKey(new Date().getTime())).into(imageView);
             ((TextView) view.findViewById(R.id.txt_delete)).setText(R.string.close);
             edtNote.setText(item.title);
         }

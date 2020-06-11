@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.signature.ObjectKey;
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
 import com.tuanfadbg.trackprogress.database.item.Item;
 import com.tuanfadbg.trackprogress.ui.main_grid.OnItemClickListener;
@@ -132,7 +133,7 @@ public class SelectImageNoTagAdapter extends RecyclerView.Adapter<SelectImageNoT
                 viewSelected.setVisibility(View.GONE);
             }
 
-            Glide.with(imageView).load(new File(item.file)).into(imageView);
+            Glide.with(imageView).load(new File(item.file)).signature(new ObjectKey(new Date().getTime())).into(imageView);
 
             itemView.setOnClickListener(v -> onItemClickListener.onClick(item));
         }

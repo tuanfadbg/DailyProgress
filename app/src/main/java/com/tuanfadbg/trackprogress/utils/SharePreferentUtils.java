@@ -39,6 +39,7 @@ public class SharePreferentUtils {
     }
 
     public static boolean isPremium() {
+//        return true;
         return (boolean) SharePreferentUtils.getSharedPreference(IS_PREMIUM, false);
     }
 

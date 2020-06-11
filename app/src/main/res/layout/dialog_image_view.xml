@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
+
     <com.ortiz.touchview.TouchImageView
         android:id="@+id/imageView"
         android:layout_width="match_parent"
@@ -37,7 +38,7 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:textColor="@android:color/white"
-            app:layout_constraintBottom_toTopOf="@+id/img_back"
+            app:layout_constraintBottom_toTopOf="@+id/img_comment"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
@@ -73,7 +74,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/img_crop"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/img_back" />
+            app:layout_constraintStart_toEndOf="@+id/img_comment" />
 
         <ImageView
             android:id="@+id/img_crop"
@@ -87,16 +88,26 @@
             app:layout_constraintStart_toEndOf="@+id/img_edit" />
 
         <ImageView
-            android:id="@+id/img_back"
+            android:id="@+id/img_comment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="15dp"
-            android:src="@drawable/ic_back"
+            android:padding="18dp"
+            android:src="@drawable/ic_comment"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/img_edit"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ImageView
+        android:id="@+id/img_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:src="@drawable/ic_back"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
         android:id="@+id/img_compare"

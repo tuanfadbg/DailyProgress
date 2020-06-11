@@ -19,6 +19,7 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.signature.ObjectKey;
 import com.ortiz.touchview.TouchImageView;
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
 import com.tuanfadbg.trackprogress.database.Data;
@@ -27,6 +28,7 @@ import com.tuanfadbg.trackprogress.database.item.Item;
 import com.tuanfadbg.trackprogress.database.item.ItemDeteleAsyncTask;
 import com.tuanfadbg.trackprogress.database.item.ItemUpdateAsyncTask;
 import com.tuanfadbg.trackprogress.ui.MainActivity;
+import com.tuanfadbg.trackprogress.ui.draw_image.DrawImageActivity;
 import com.tuanfadbg.trackprogress.ui.image_note.ImageNoteDialog;
 import com.tuanfadbg.trackprogress.ui.side_by_side.SideBySideDialog;
 import com.tuanfadbg.trackprogress.utils.FileManager;
@@ -38,6 +40,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Date;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
@@ -85,7 +88,7 @@ public class ImageViewDialog extends DialogFragment {
         txtTitle = view.findViewById(R.id.txt_title);
 
         txtTitle.setText(item.title);
-        Glide.with(imageView).load(new File(item.file)).into(imageView);
+        Glide.with(imageView).load(new File(item.file)).signature(new ObjectKey(new Date().getTime())).into(imageView);
 
         imageView.setOnClickListener(v -> {
             if (ctBottom.getVisibility() == View.VISIBLE)
@@ -96,7 +99,8 @@ public class ImageViewDialog extends DialogFragment {
 
         view.findViewById(R.id.img_compare).setOnClickListener(v -> compare());
         view.findViewById(R.id.img_back).setOnClickListener(v -> dismiss());
-        view.findViewById(R.id.img_edit).setOnClickListener(v -> edit());
+        view.findViewById(R.id.img_comment).setOnClickListener(v -> edit());
+        view.findViewById(R.id.img_edit).setOnClickListener(v -> startActivityForResult(DrawImageActivity.getStartIntent(getContext(), item.file), DrawImageActivity.REQUEST_CODE));
         view.findViewById(R.id.img_crop).setOnClickListener(v -> crop());
         view.findViewById(R.id.img_share).setOnClickListener(v -> share());
         view.findViewById(R.id.img_delete).setOnClickListener(v -> delete());
@@ -189,8 +193,7 @@ public class ImageViewDialog extends DialogFragment {
                         });
                 }
             });
-        }
-        else {
+        } else {
             ((MainActivity) getActivity()).setOnPermissionGranted(new MainActivity.OnPermissionGranted() {
                 @Override
                 public void onPermissionGranted() {
@@ -235,7 +238,7 @@ public class ImageViewDialog extends DialogFragment {
             final Uri resultUri = UCrop.getOutput(data);
             File previousFile = new File(item.file);
             if (previousFile.delete()) {
-                Glide.with(imageView).load(resultUri).into(imageView);
+                Glide.with(imageView).load(resultUri).signature(new ObjectKey(new Date().getTime())).into(imageView);
                 item.file = tempFile.getAbsolutePath();
                 ItemUpdateAsyncTask itemUpdateAsyncTask = new ItemUpdateAsyncTask(getContext());
                 itemUpdateAsyncTask.execute(new Data(item, new OnUpdateDatabase() {
@@ -255,9 +258,13 @@ public class ImageViewDialog extends DialogFragment {
                 sweetAlertDialog.show();
             }
         } else if (resultCode == UCrop.RESULT_ERROR) {
-            Log.e(TAG, "onActivityResult: " + data.toString());
             final Throwable cropError = UCrop.getError(data);
+        } else if (requestCode == DrawImageActivity.REQUEST_CODE) {
+            if (getActivity() != null) {
+                Glide.with(imageView).load(new File(item.file)).signature(new ObjectKey(new Date().getTime())).into(imageView);
+            }
         }
+
     }
 
     public void setItem(Item item) {

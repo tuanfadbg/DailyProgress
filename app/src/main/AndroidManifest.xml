@@ -43,6 +43,7 @@
             android:name="com.yalantis.ucrop.UCropActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <activity android:name="com.tuanfadbg.trackprogress.ui.draw_image.DrawImageActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

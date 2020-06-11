@@ -71,4 +71,12 @@
     <string name="export_success">Successful image export</string>
     <string name="str_ok">OK</string>
     <string name="ask_export_image">Are you sure you want to export all image to folder</string>
+    <string name="restore">Restore</string>
+    <string name="if_you_lose_data_restore_it">If you lose data, restore it</string>
+    <string name="rotate">Rotate</string>
+    <string name="brush">Brush</string>
+    <string name="text">Text</string>
+    <string name="enter_text_here">Enter text here</string>
+    <string name="fail_to_save_your_image">Fail to save your image</string>
+    <string name="no_data_to_restore">No data to restore</string>
 </resources>

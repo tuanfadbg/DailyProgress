@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "647441419200",
+    "firebase_url": "https://track-progress-7d192.firebaseio.com",
+    "project_id": "track-progress-7d192",
+    "storage_bucket": "track-progress-7d192.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:647441419200:android:b0e5c45b7ca89df8bad625",
+        "android_client_info": {
+          "package_name": "com.tuanfadbg.trackprogress.beforeafterimage"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "647441419200-ev06jc3acpusjdn44ol5k6thodu50vaj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCE210eygYwdQI4hFYYJJFC19CiAgSaco"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "647441419200-ev06jc3acpusjdn44ol5k6thodu50vaj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -139,6 +139,11 @@ public class FileManager {
         return mypath;
     }
 
+    public File getPrivateFolder() {
+        ContextWrapper cw = new ContextWrapper(activity);
+        File directory = cw.getDir("data", Context.MODE_PRIVATE);
+        return directory;
+    }
     public File getNewFileInPrivateStorate() {
         ContextWrapper cw = new ContextWrapper(activity);
         File directory = cw.getDir("data", Context.MODE_PRIVATE);

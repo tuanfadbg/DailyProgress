@@ -9,4 +9,6 @@
     <color name="gray">#AEAEAE</color>
     <color name="color_gray_6a6a6a">#6A6A6A</color>
     <color name="gray_dimmer">#52000000</color>
+    <color name="color_border_button_dialog">#D9D9CD</color>
+    <color name="color_blue">#007efa</color>
 </resources>

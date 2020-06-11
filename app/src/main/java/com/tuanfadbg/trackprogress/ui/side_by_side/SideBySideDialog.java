@@ -3,14 +3,15 @@ package com.tuanfadbg.trackprogress.ui.side_by_side;
 import android.Manifest;
 import android.app.Dialog;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -22,6 +23,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
@@ -29,6 +31,7 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.signature.ObjectKey;
 import com.ortiz.touchview.TouchImageView;
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
 import com.tuanfadbg.trackprogress.database.item.Item;
@@ -36,11 +39,14 @@ import com.tuanfadbg.trackprogress.database.item.ItemSelectAsyncTask;
 import com.tuanfadbg.trackprogress.ui.MainActivity;
 import com.tuanfadbg.trackprogress.ui.select_image.SelectImageDialog;
 import com.tuanfadbg.trackprogress.utils.FileManager;
+import com.tuanfadbg.trackprogress.utils.RotateTransformation;
 import com.tuanfadbg.trackprogress.utils.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
@@ -54,6 +60,7 @@ public class SideBySideDialog extends DialogFragment {
     private static final int VIEW_TYPE_COMBINE_ONE = 1;
 
     private TouchImageView imageView, imageView1, imageView2;
+    TextView txtRotateLeft, txtRotateRight;
     private ImageView imgSettings;
     private Item item;
     private List<Item> items;
@@ -65,6 +72,9 @@ public class SideBySideDialog extends DialogFragment {
     private Item itemLeft;
     private Item itemRight;
     private int viewType = VIEW_TYPE_COMBINE_ONE;
+
+    private float imgLeftRotate = 0f;
+    private float imgRightRotate = 0f;
 
     public SideBySideDialog(Item item) {
         this.item = item;
@@ -104,7 +114,13 @@ public class SideBySideDialog extends DialogFragment {
         imageView = view.findViewById(R.id.imageView);
         imageView1 = view.findViewById(R.id.imageView_1);
         imageView2 = view.findViewById(R.id.imageView_2);
+        txtRotateLeft = view.findViewById(R.id.txt_rotate_left);
+        txtRotateRight = view.findViewById(R.id.txt_rotate_right);
+
+        imageView2 = view.findViewById(R.id.imageView_2);
         imageView.setMaxZoom(100f);
+        imageView1.setMaxZoom(100f);
+        imageView2.setMaxZoom(100f);
         imgSettings = view.findViewById(R.id.img_settings);
         progressBar = view.findViewById(R.id.progressBar);
 
@@ -156,10 +172,201 @@ public class SideBySideDialog extends DialogFragment {
         });
     }
 
+    private void setImageByType() {
+        if (viewType == VIEW_TYPE_ZOOM_EACH_IMAGE) {
+            imgSettings.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_zoom_each_image));
+            reloadImageLeft();
+            reloadImageRight();
+
+            imageView.setVisibility(View.GONE);
+            imageView1.setVisibility(View.VISIBLE);
+            imageView2.setVisibility(View.VISIBLE);
+//
+//            txtRotateLeft.setVisibility(View.VISIBLE);
+//            txtRotateRight.setVisibility(View.VISIBLE);
+        } else if (viewType == VIEW_TYPE_COMBINE_ONE) {
+            imgSettings.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_combine_one_image));
+            Glide.with(imageView).load(resultbitmap).signature(new ObjectKey(new Date().getTime())).into(imageView);
+
+            imageView.setVisibility(View.VISIBLE);
+            imageView1.setVisibility(View.GONE);
+            imageView2.setVisibility(View.GONE);
+//
+//            txtRotateLeft.setVisibility(View.GONE);
+//            txtRotateRight.setVisibility(View.GONE);
+        }
+    }
+
+
+    private void setListener(View view) {
+        view.findViewById(R.id.ic_edit).setOnClickListener(v -> {
+            EditSideBySideDialog editSideBySideDialog
+                    = new EditSideBySideDialog(title, time1, time2, style,
+                    (title, time1, time2, style) -> {
+                        SideBySideDialog.this.title = title;
+                        SideBySideDialog.this.time1 = time1;
+                        SideBySideDialog.this.time2 = time2;
+                        SideBySideDialog.this.style = style;
+                        createBitmap();
+                    });
+            editSideBySideDialog.show(getFragmentManager(), EditSideBySideDialog.class.getSimpleName());
+        });
+
+        view.findViewById(R.id.img_back).setOnClickListener(v -> dismiss());
+        view.findViewById(R.id.ic_share).setOnClickListener(v -> share());
+        view.findViewById(R.id.ic_save).setOnClickListener(v -> save());
+        view.findViewById(R.id.img_settings).setOnClickListener(v -> setting());
+        view.findViewById(R.id.img_select_right).setOnClickListener(v -> selectImageRight());
+//        view.findViewById(R.id.img_right).setOnClickListener(v -> selectImageRight());
+
+        view.findViewById(R.id.img_select_left).setOnClickListener(v -> selectImageLeft());
+//        view.findViewById(R.id.img_left).setOnClickListener(v -> selectImageLeft());
+
+        txtRotateLeft.setOnClickListener(v -> rotateImageOnTheLeft());
+        txtRotateRight.setOnClickListener(v -> rotateImageOnTheRight());
+
+    }
+
+    private void rotateImageOnTheLeft() {
+        imgLeftRotate = (imgLeftRotate + 90f) % 360f;
+        if (viewType == VIEW_TYPE_ZOOM_EACH_IMAGE) {
+            reloadImageLeft();
+        } else {
+            createBitmap();
+        }
+    }
+
+    private void rotateImageOnTheRight() {
+        imgRightRotate = (imgRightRotate + 90f) % 360f;
+        if (viewType == VIEW_TYPE_ZOOM_EACH_IMAGE) {
+            reloadImageRight();
+        } else {
+            createBitmap();
+        }
+    }
+
+    private void reloadImageLeft() {
+        Glide.with(getContext())
+                .load(itemLeft.file)
+                .signature(new ObjectKey(new Date().getTime()))
+                .transform(new RotateTransformation(getContext(), imgLeftRotate))
+                .into(imageView1);
+    }
+
+    private void reloadImageRight() {
+        Glide.with(getContext())
+                .load(itemRight.file)
+                .signature(new ObjectKey(new Date().getTime()))
+                .transform(new RotateTransformation(getContext(), imgRightRotate))
+                .into(imageView2);
+    }
+
+    private void setting() {
+        viewType = (viewType + 1) % 2;
+        setImageByType();
+    }
+
+    private void save() {
+        if (FileManager.isWriteStoragePermissionGranted(getActivity())) {
+            SweetAlertDialog pDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
+            pDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
+            pDialog.setTitleText(getString(R.string.loading));
+            pDialog.setCancelable(false);
+            pDialog.show();
+
+            AsyncTask.execute(() -> {
+                FileManager qrFileManager = new FileManager(getActivity());
+                String imagePath = qrFileManager.storeImage(resultbitmap);
+                if (SideBySideDialog.this.getActivity() != null)
+                    SideBySideDialog.this.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            pDialog
+                                    .setTitleText(getString(R.string.saved))
+                                    .setContentText(getString(R.string.image_saved))
+                                    .setConfirmText(getString(R.string.str_ok))
+                                    .setConfirmClickListener(null)
+                                    .changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
+                        }
+                    });
+            });
+        } else {
+            ((MainActivity) getActivity()).setOnPermissionGranted(new MainActivity.OnPermissionGranted() {
+                @Override
+                public void onPermissionGranted() {
+                    save();
+                }
+            });
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_REQUEST_CODE);
+        }
+    }
+
+    private void share() {
+        if (FileManager.isWriteStoragePermissionGranted(getActivity())) {
+            SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
+            sweetAlertDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
+            sweetAlertDialog.setTitle(R.string.loading);
+            sweetAlertDialog.show();
+            AsyncTask.execute(() -> {
+                FileManager fileManager = new FileManager(getActivity());
+                String fileName = fileManager.storeImageWithoutBroadcast(resultbitmap);
+                shareImage(new File(fileName));
+                if (SideBySideDialog.this.getActivity() != null)
+                    SideBySideDialog.this.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            sweetAlertDialog.dismissWithAnimation();
+                        }
+                    });
+            });
+        } else {
+            ((MainActivity) getActivity()).setOnPermissionGranted(new MainActivity.OnPermissionGranted() {
+                @Override
+                public void onPermissionGranted() {
+                    share();
+                }
+            });
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_REQUEST_CODE);
+        }
+    }
+
+    private void shareImage(File file) {
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ?
+                FileProvider.getUriForFile(getContext(), getContext().getPackageName(), file) : Uri.fromFile(file));
+        shareIntent.setType("image/*");
+        startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.share_video)));
+    }
+
+    private SelectImageDialog selectImageDialog;
+
+    private void selectImageRight() {
+        selectImageDialog = new SelectImageDialog(tagId, item -> {
+            if (selectImageDialog != null)
+                selectImageDialog.dismiss();
+            itemRight = item;
+            time2 = Utils.getTimeFromLong(itemRight.createAt);
+            createBitmap();
+        });
+        selectImageDialog.show(getFragmentManager(), SelectImageDialog.class.getSimpleName());
+    }
+
+    private void selectImageLeft() {
+        selectImageDialog = new SelectImageDialog(tagId, item -> {
+            if (selectImageDialog != null)
+                selectImageDialog.dismiss();
+            itemLeft = item;
+            time1 = Utils.getTimeFromLong(itemLeft.createAt);
+            createBitmap();
+        });
+        selectImageDialog.show(getFragmentManager(), SelectImageDialog.class.getSimpleName());
+    }
+
     public Bitmap mergeBitmap(Item itemLeft, Item itemRight) {
         Bitmap fr, sc;
-        fr = loadImageFromStorage(itemLeft.file);
-        sc = loadImageFromStorage(itemRight.file);
+        fr = loadImageFromStorage(itemLeft.file, imgLeftRotate);
+        sc = loadImageFromStorage(itemRight.file, imgRightRotate);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -281,160 +488,48 @@ public class SideBySideDialog extends DialogFragment {
         return comboBitmap;
     }
 
-    private Bitmap loadImageFromStorage(String path) {
+    private Bitmap loadImageFromStorage(String path, float userRotate) {
         try {
             File f = new File(path);
+
             Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
-            return b;
+            float rotation = getImageRotation(path) + userRotate;
+            if (rotation != 0) {
+                Matrix matrix = new Matrix();
+                matrix.preRotate(rotation);
+                return Bitmap.createBitmap(b, 0, 0, b.getWidth(), b.getHeight(), matrix, true);
+            } else {
+                return b;
+            }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    private void setImageByType() {
-        if (viewType == VIEW_TYPE_ZOOM_EACH_IMAGE) {
-            imgSettings.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_zoom_each_image));
-            Glide.with(getContext()).load(itemLeft.file).into(imageView1);
-            Glide.with(getContext()).load(itemRight.file).into(imageView2);
+    public int getImageRotation(String filePath) {
+        ExifInterface exif = null;
+        try {
+            exif = new ExifInterface(filePath);
+            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            int rotationInDegrees = exifToDegrees(orientation);
 
-            imageView.setVisibility(View.GONE);
-            imageView1.setVisibility(View.VISIBLE);
-            imageView2.setVisibility(View.VISIBLE);
-        } else if (viewType == VIEW_TYPE_COMBINE_ONE) {
-            imgSettings.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_combine_one_image));
-            Glide.with(imageView).load(resultbitmap).into(imageView);
-
-            imageView.setVisibility(View.VISIBLE);
-            imageView1.setVisibility(View.GONE);
-            imageView2.setVisibility(View.GONE);
+            return rotationInDegrees;
+        } catch (
+                IOException e) {
+            e.printStackTrace();
         }
+        return 0;
     }
 
-    private void setListener(View view) {
-        view.findViewById(R.id.ic_edit).setOnClickListener(v -> {
-            EditSideBySideDialog editSideBySideDialog
-                    = new EditSideBySideDialog(title, time1, time2, style,
-                    (title, time1, time2, style) -> {
-                        SideBySideDialog.this.title = title;
-                        SideBySideDialog.this.time1 = time1;
-                        SideBySideDialog.this.time2 = time2;
-                        SideBySideDialog.this.style = style;
-                        createBitmap();
-                    });
-            editSideBySideDialog.show(getFragmentManager(), EditSideBySideDialog.class.getSimpleName());
-        });
-
-        view.findViewById(R.id.img_back).setOnClickListener(v -> dismiss());
-        view.findViewById(R.id.ic_share).setOnClickListener(v -> share());
-        view.findViewById(R.id.ic_save).setOnClickListener(v -> save());
-        view.findViewById(R.id.img_settings).setOnClickListener(v -> setting());
-        view.findViewById(R.id.img_select_right).setOnClickListener(v -> selectImageRight());
-        view.findViewById(R.id.img_right).setOnClickListener(v -> selectImageRight());
-
-        view.findViewById(R.id.img_select_left).setOnClickListener(v -> selectImageLeft());
-        view.findViewById(R.id.img_left).setOnClickListener(v -> selectImageLeft());
-    }
-
-    private void setting() {
-        viewType = (viewType + 1) % 2;
-        setImageByType();
-    }
-
-    private void save() {
-        if (FileManager.isWriteStoragePermissionGranted(getActivity())) {
-            SweetAlertDialog pDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
-            pDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
-            pDialog.setTitleText(getString(R.string.loading));
-            pDialog.setCancelable(false);
-            pDialog.show();
-
-            AsyncTask.execute(() -> {
-                FileManager qrFileManager = new FileManager(getActivity());
-                String imagePath = qrFileManager.storeImage(resultbitmap);
-                if (SideBySideDialog.this.getActivity() != null)
-                    SideBySideDialog.this.getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            pDialog
-                                    .setTitleText(getString(R.string.saved))
-                                    .setContentText(getString(R.string.image_saved))
-                                    .setConfirmText(getString(R.string.str_ok))
-                                    .setConfirmClickListener(null)
-                                    .changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
-                        }
-                    });
-            });
-        } else {
-            ((MainActivity) getActivity()).setOnPermissionGranted(new MainActivity.OnPermissionGranted() {
-                @Override
-                public void onPermissionGranted() {
-                    save();
-                }
-            });
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_REQUEST_CODE);
+    private static int exifToDegrees(int exifOrientation) {
+        if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
+            return 90;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
+            return 180;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {
+            return 270;
         }
-    }
-
-    private void share() {
-        if (FileManager.isWriteStoragePermissionGranted(getActivity())) {
-            SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
-            sweetAlertDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
-            sweetAlertDialog.setTitle(R.string.loading);
-            sweetAlertDialog.show();
-            AsyncTask.execute(() -> {
-                FileManager fileManager = new FileManager(getActivity());
-                String fileName = fileManager.storeImageWithoutBroadcast(resultbitmap);
-                shareImage(new File(fileName));
-                if (SideBySideDialog.this.getActivity() != null)
-                    SideBySideDialog.this.getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            sweetAlertDialog.dismissWithAnimation();
-                        }
-                    });
-            });
-        } else {
-            ((MainActivity) getActivity()).setOnPermissionGranted(new MainActivity.OnPermissionGranted() {
-                @Override
-                public void onPermissionGranted() {
-                    share();
-                }
-            });
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_REQUEST_CODE);
-        }
-    }
-
-    private void shareImage(File file) {
-        Intent shareIntent = new Intent();
-        shareIntent.setAction(Intent.ACTION_SEND);
-        shareIntent.putExtra(Intent.EXTRA_STREAM, Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ?
-                FileProvider.getUriForFile(getContext(), getContext().getPackageName(), file) : Uri.fromFile(file));
-        shareIntent.setType("image/*");
-        startActivity(Intent.createChooser(shareIntent, getResources().getText(R.string.share_video)));
-    }
-
-    private SelectImageDialog selectImageDialog;
-
-    private void selectImageRight() {
-        selectImageDialog = new SelectImageDialog(tagId, item -> {
-            if (selectImageDialog != null)
-                selectImageDialog.dismiss();
-            itemRight = item;
-            time2 = Utils.getTimeFromLong(itemRight.createAt);
-            createBitmap();
-        });
-        selectImageDialog.show(getFragmentManager(), SelectImageDialog.class.getSimpleName());
-    }
-
-    private void selectImageLeft() {
-        selectImageDialog = new SelectImageDialog(tagId, item -> {
-            if (selectImageDialog != null)
-                selectImageDialog.dismiss();
-            itemLeft = item;
-            time1 = Utils.getTimeFromLong(itemLeft.createAt);
-            createBitmap();
-        });
-        selectImageDialog.show(getFragmentManager(), SelectImageDialog.class.getSimpleName());
+        return 0;
     }
 }

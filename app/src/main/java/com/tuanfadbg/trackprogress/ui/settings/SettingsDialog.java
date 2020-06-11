@@ -3,6 +3,7 @@ package com.tuanfadbg.trackprogress.ui.settings;
 import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -34,6 +35,7 @@ import com.tuanfadbg.trackprogress.ui.MainActivity;
 import com.tuanfadbg.trackprogress.ui.edit_name.EditNameDialog;
 import com.tuanfadbg.trackprogress.ui.image_note.ImageNoteDialog;
 import com.tuanfadbg.trackprogress.ui.passcode.CreatePasscodeDialog;
+import com.tuanfadbg.trackprogress.ui.restore.RestoreDialog;
 import com.tuanfadbg.trackprogress.ui.tag_manager.TagManagerDialog;
 import com.tuanfadbg.trackprogress.utils.FileManager;
 import com.tuanfadbg.trackprogress.utils.SharePreferentUtils;
@@ -43,6 +45,8 @@ import com.tuanfadbg.trackprogress.utils.takephoto.TakePhotoCallback;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
@@ -147,6 +151,7 @@ public class SettingsDialog extends DialogFragment {
         view.findViewById(R.id.ct_tag_manager).setOnClickListener(v -> showTagManager());
         view.findViewById(R.id.txt_upgrade).setOnClickListener(v -> upgradePremium());
         ctExport.setOnClickListener(v -> exportAll());
+        view.findViewById(R.id.ct_restore).setOnClickListener(v -> restore());
     }
 
     private BillingClient billingClient;
@@ -410,5 +415,60 @@ public class SettingsDialog extends DialogFragment {
     private void grantEtitlement() {
         SharePreferentUtils.setPremium(true);
         setLayout();
+    }
+
+    private void restore() {
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                FileManager fileManager = new FileManager(getActivity());
+                File dataFolder = fileManager.getPrivateFolder();
+                File[] allData = dataFolder.listFiles();
+                ArrayList<String> allDataInFolder = new ArrayList<>();
+                for (int i = 0; i < allData.length; i++) {
+                    allDataInFolder.add(allData[i].getAbsolutePath());
+                }
+
+                ItemSelectAsyncTask itemSelectAsyncTask = new ItemSelectAsyncTask(getContext());
+                itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, null, new ItemSelectAsyncTask.OnItemSelectedListener() {
+                    @Override
+                    public void onSelected(List<Item> datas) {
+                        ArrayList<String> dataInDb = new ArrayList<>();
+                        for (int i = 0; i < datas.size(); i++) {
+                            String file = datas.get(i).file;
+                            dataInDb.add(file);
+                        }
+                        for (int i = 0; i < allDataInFolder.size(); i++) {
+                            if (dataInDb.contains(allDataInFolder.get(i))) {
+                                dataInDb.remove(allDataInFolder.get(i));
+                                allDataInFolder.remove(i);
+                                i--;
+                            }
+                        }
+                        if (allDataInFolder.size() > 0) {
+                            showDialogRestore(allDataInFolder);
+                        } else
+                            showDialogNoDataToRestore();
+                    }
+                }));
+
+            }
+        });
+    }
+
+    private void showDialogRestore(ArrayList<String> dataToRestore) {
+        RestoreDialog restoreDialog = new RestoreDialog(dataToRestore, new RestoreDialog.OnUpdateItemListener() {
+            @Override
+            public void onUpdated() {
+
+            }
+        });
+        restoreDialog.show(getFragmentManager(), RestoreDialog.class.getSimpleName());
+    }
+
+    private void showDialogNoDataToRestore() {
+        SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.SUCCESS_TYPE);
+        sweetAlertDialog.setTitle(getString(R.string.no_data_to_restore));
+        sweetAlertDialog.show();
     }
 }

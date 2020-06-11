@@ -67,5 +67,6 @@ public class SelectImageDialog extends DialogFragment {
         }));
 
         view.findViewById(R.id.txt_cancel).setOnClickListener(v -> dismiss());
+        view.setOnClickListener(v -> dismiss());
     }
 }
