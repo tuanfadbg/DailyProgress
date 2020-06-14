@@ -11,17 +11,25 @@ import android.widget.TextView;
 
 import androidx.fragment.app.DialogFragment;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
-import com.tuanfadbg.trackprogress.utils.GMailSender;
 import com.tuanfadbg.trackprogress.utils.SharePreferentUtils;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
 public class ForgotPasswordDialog extends DialogFragment {
 
-    TextView txtEmail;
-    ProgressBar progressBar;
-    ImageView imgLock;
+    private TextView txtEmail;
+    private ProgressBar progressBar;
+    private ImageView imgLock;
 
     @Override
     public void onStart() {
@@ -61,45 +69,58 @@ public class ForgotPasswordDialog extends DialogFragment {
 
     private void checkAndSendEmail() {
         String email = SharePreferentUtils.getEmail();
-        sendEmail(email);
+        sendEmail(email, SharePreferentUtils.createTempPasscode());
     }
 
     private boolean isButtonSendEmailEnable = true;
 
-    private void sendEmail(String email) {
+    private void sendEmail(String email, String passCode) {
         if (!isButtonSendEmailEnable)
             return;
         isButtonSendEmailEnable = false;
         imgLock.setVisibility(View.INVISIBLE);
         progressBar.setVisibility(View.VISIBLE);
-        new Thread(() -> {
-            try {
-                GMailSender sender = new GMailSender(
-                        "contact.fadeveloper@gmail.com",
-                        "tuanfa99");
 
-                sender.sendMail("Forgot passcode", "Your passcode is " + SharePreferentUtils.createTempPasscode(),
-                        "forgotpassword_noreply@gmail.com",
-                        email);
-                if (getActivity() != null)
-                    getActivity().runOnUiThread(() -> {
+        RequestQueue queue = Volley.newRequestQueue(getContext());
+        String url = "https://tuanfadbg.com/api/sendmail.php";
+        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        // response
+//                        Log.d("Response", response);
+                        isButtonSendEmailEnable = true;
+
                         imgLock.setVisibility(View.VISIBLE);
                         progressBar.setVisibility(View.GONE);
-                        showDialogSuccess();
-                    });
-            } catch (Exception e) {
-                isButtonSendEmailEnable = true;
-                if (getActivity() != null)
-                    getActivity().runOnUiThread(() -> {
+
+                        if (response.equals("success")) {
+                            showDialogSuccess();
+                        } else {
+                            showDialogFail();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        isButtonSendEmailEnable = true;
                         imgLock.setVisibility(View.VISIBLE);
                         progressBar.setVisibility(View.GONE);
                         showDialogFail();
-                    });
+                    }
+                }
+        ) {
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("passcode", passCode);
+                params.put("email", email);
+
+                return params;
             }
-
-        }).
-
-                start();
+        };
+        queue.add(postRequest);
     }
 
     private void showDialogSuccess() {

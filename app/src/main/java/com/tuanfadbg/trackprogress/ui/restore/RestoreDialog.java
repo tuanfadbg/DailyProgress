@@ -1,17 +1,9 @@
 package com.tuanfadbg.trackprogress.ui.restore;
 
 import android.app.Dialog;
-import android.content.ClipData;
-import android.content.ContentValues;
-import android.content.Context;
 import android.content.DialogInterface;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.DocumentsContract;
-import android.provider.MediaStore;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,23 +14,19 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.room.Room;
 
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
-import com.tuanfadbg.trackprogress.database.AppDatabase;
 import com.tuanfadbg.trackprogress.database.Data;
 import com.tuanfadbg.trackprogress.database.OnUpdateDatabase;
 import com.tuanfadbg.trackprogress.database.item.Item;
 import com.tuanfadbg.trackprogress.database.item.ItemInsertAsyncTask;
-import com.tuanfadbg.trackprogress.database.item.ItemSelectAsyncTask;
-import com.tuanfadbg.trackprogress.database.item.ItemUpdateAsyncTask;
 import com.tuanfadbg.trackprogress.database.tag.Tag;
 import com.tuanfadbg.trackprogress.ui.MainActivity;
 import com.tuanfadbg.trackprogress.ui.add_tag.AddTagDialog;
-import com.tuanfadbg.trackprogress.utils.FileManager;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
@@ -128,19 +116,30 @@ public class RestoreDialog extends DialogFragment {
         sweetAlertDialog.setTitle(getString(R.string.are_you_sure));
         sweetAlertDialog.setConfirmText(getString(R.string.delete));
         sweetAlertDialog.setCancelText(getString(R.string.cancel));
-        sweetAlertDialog.setConfirmClickListener(sweetAlertDialog1 -> AsyncTask.execute(() -> {
-            for (int i = 0; i < items.size(); i++) {
-                File file = new File(items.get(i));
-                if (file.exists()) {
-                    file.delete();
+        sweetAlertDialog.setConfirmClickListener(sweetAlertDialog1 -> {
+            AsyncTask.execute(() -> {
+                for (int i = 0; i < items.size(); i++) {
+                    File file = new File(items.get(i));
+                    if (file.exists()) {
+                        file.delete();
+                    }
+                    dataToRestore.remove(items.get(i));
                 }
-                dataToRestore.remove(items.get(i));
-                dataGridAdapter.setData(dataToRestore);
-            }
-            if (getActivity() != null) {
-                getActivity().runOnUiThread(sweetAlertDialog::dismissWithAnimation);
-            }
-        }));
+
+                if (dataToRestore.size() == 0) {
+                    dismiss();
+                    return;
+                }
+                if (getActivity() != null)
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            dataGridAdapter.setData(dataToRestore);
+                        }
+                    });
+            });
+            sweetAlertDialog1.dismissWithAnimation();
+        });
         sweetAlertDialog.show();
     }
 
@@ -174,7 +173,7 @@ public class RestoreDialog extends DialogFragment {
         sweetAlertDialog.setContentText(getString(R.string.image_move_to_tag));
         sweetAlertDialog.setConfirmButton(getString(R.string.move), new SweetAlertDialog.OnSweetClickListener() {
             @Override
-            public void onClick(SweetAlertDialog sweetAlertDialog) {
+            public void onClick(SweetAlertDialog sweetAlertDialog1) {
                 List<String> items = dataGridAdapter.getItemSelected();
                 Observable.fromArray(items)
                         .subscribeOn(Schedulers.newThread())
@@ -201,7 +200,9 @@ public class RestoreDialog extends DialogFragment {
                             public void onComplete() {
                                 if (getActivity() != null) {
                                     getActivity().sendBroadcast(MainActivity.getBRItem());
+                                    sweetAlertDialog1.dismissWithAnimation();
                                     dismiss();
+
                                 }
                             }
                         });
@@ -233,38 +234,39 @@ public class RestoreDialog extends DialogFragment {
     }
 
     public long getLastModified(String fileName) {
-        Uri uri = getImageContentUri(getContext(), new File(fileName));
-        String[] filePathColumn = {MediaStore.Images.Media.DATA, DocumentsContract.Document.COLUMN_LAST_MODIFIED};
-        Cursor cursor = getContext().getContentResolver().query(uri, filePathColumn, null, null, null);
-        cursor.moveToFirst();
-
-        int columnIndex1 = cursor.getColumnIndex(filePathColumn[1]);
-        String lastModifiedString = cursor.getString(columnIndex1);
-        return TextUtils.isEmpty(lastModifiedString) ? 0 : Long.parseLong(lastModifiedString);
+//        Uri uri = FileProvider.getUriForFile(getContext(), BuildConfig.APPLICATION_ID, new File(fileName));
+//        String[] filePathColumn = {MediaStore.Images.Media.DATA, DocumentsContract.Document.COLUMN_LAST_MODIFIED};
+//        Cursor cursor = getContext().getContentResolver().query(uri, filePathColumn, null, null, null);
+//        cursor.moveToFirst();
+//
+//        int columnIndex1 = cursor.getColumnIndex(filePathColumn[1]);
+//        String lastModifiedString = cursor.getString(columnIndex1);
+//        return TextUtils.isEmpty(lastModifiedString) ? 0 : Long.parseLong(lastModifiedString);
+        return new Date().getTime();
     }
 
-    public static Uri getImageContentUri(Context context, File imageFile) {
-        String filePath = imageFile.getAbsolutePath();
-        Cursor cursor = context.getContentResolver().query(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                new String[]{MediaStore.Images.Media._ID},
-                MediaStore.Images.Media.DATA + "=? ",
-                new String[]{filePath}, null);
-        if (cursor != null && cursor.moveToFirst()) {
-            int id = cursor.getInt(cursor.getColumnIndex(MediaStore.MediaColumns._ID));
-            cursor.close();
-            return Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "" + id);
-        } else {
-            if (imageFile.exists()) {
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.Images.Media.DATA, filePath);
-                return context.getContentResolver().insert(
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-            } else {
-                return null;
-            }
-        }
-    }
+//    public static Uri getImageContentUri(Context context, File imageFile) {
+//        String filePath = imageFile.getAbsolutePath();
+//        Cursor cursor = context.getContentResolver().query(
+//                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+//                new String[]{MediaStore.Images.Media._ID},
+//                MediaStore.Images.Media.DATA + "=? ",
+//                new String[]{filePath}, null);
+//        if (cursor != null && cursor.moveToFirst()) {
+//            int id = cursor.getInt(cursor.getColumnIndex(MediaStore.MediaColumns._ID));
+//            cursor.close();
+//            return Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "" + id);
+//        } else {
+//            if (imageFile.exists()) {
+//                ContentValues values = new ContentValues();
+//                values.put(MediaStore.Images.Media.DATA, filePath);
+//                return context.getContentResolver().insert(
+//                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+//            } else {
+//                return null;
+//            }
+//        }
+//    }
 
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {

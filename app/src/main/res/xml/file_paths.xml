@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <external-path name="my_images"
-        path="Android/data/com.tuanfadbg.progress/files/Pictures" />
+        path="Android/data/com.tuanfadbg.trackprogress.beforeafterimage/files/Pictures" />
+    <external-path name="my_images_private"
+        path="data/data/com.tuanfadbg.trackprogress.beforeafterimage" />
     <external-path
         name="external_storage_root"
         path="." />
+    <files-path
+        name="private"
+        path="."/>
 </paths>

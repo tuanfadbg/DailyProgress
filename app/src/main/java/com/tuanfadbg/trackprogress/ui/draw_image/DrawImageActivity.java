@@ -100,10 +100,10 @@ public class DrawImageActivity extends AppCompatActivity {
                         ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) mPhotoEditorView.getLayoutParams();
                         if ((float) screenWidth / (float) screenHeight < (float) myBitmap.getWidth() / (float) myBitmap.getHeight()) {
                             layoutParams.width = screenWidth;
-                            layoutParams.height = (int) (screenWidth * (float) myBitmap.getHeight() / (float) myBitmap.getWidth());
+                            layoutParams.height = (int) ((float) screenWidth * (float) myBitmap.getHeight() / (float) myBitmap.getWidth());
                         } else {
                             layoutParams.height = screenHeight;
-                            layoutParams.width = (int) (screenHeight * (float) myBitmap.getWidth() / (float) myBitmap.getHeight());
+                            layoutParams.width = (int) ((float) screenHeight * (float) myBitmap.getWidth() / (float) myBitmap.getHeight());
                         }
                         Log.e(TAG, "init: " + layoutParams.width + " " + layoutParams.height);
                         mPhotoEditorView.setLayoutParams(layoutParams);
