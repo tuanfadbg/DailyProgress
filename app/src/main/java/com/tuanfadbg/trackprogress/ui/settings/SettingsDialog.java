@@ -230,71 +230,7 @@ public class SettingsDialog extends DialogFragment {
 
     private void importPhoto() {
         if (getActivity() != null)
-            ((MainActivity) getActivity())
-                    .getTakePhotoUtils()
-                    .selectMultiple()
-                    .getImageFromGallery()
-                    .setListener(new TakePhotoCallback() {
-                        @Override
-                        public void onMultipleSuccess(List<String> imagesEncodedList, ArrayList<Uri> mArrayUri, List<Long> lastModifieds) {
-                            if (getActivity() == null)
-                                return;
-                            if (imagesEncodedList != null)
-                                for (String imgPath : imagesEncodedList) {
-                                    if (!Utils.isImage(imgPath)) {
-                                        showAlertNotImage();
-                                        return;
-                                    }
-                                }
-                            ImageNoteDialog imageNoteDialog =
-                                    new ImageNoteDialog(mArrayUri,
-                                            ((MainActivity) getActivity()).getCurrentTagSelected(),
-                                            (hasNewTag, tagId) -> {
-                                                ((MainActivity) getActivity()).updateNewItem(hasNewTag, tagId);
-                                                showAlertImportSuccess();
-                                            });
-
-                            imageNoteDialog.setLastModifieds(lastModifieds);
-                            imageNoteDialog.show(getActivity().getSupportFragmentManager(), ImageNoteDialog.class.getSimpleName());
-                        }
-
-                        @Override
-                        public void onSuccess(Bitmap bitmap, int width, int height, Uri sourceUri, long lastModified) {
-                            if (getActivity() == null)
-                                return;
-
-                            ImageNoteDialog imageNoteDialog =
-                                    new ImageNoteDialog(bitmap,
-                                            ((MainActivity) getActivity()).getCurrentTagSelected(),
-                                            (hasNewTag, tagId) -> {
-                                                ((MainActivity) getActivity()).updateNewItem(hasNewTag, tagId);
-                                                showAlertImportSuccess();
-                                            });
-                            imageNoteDialog.setLastModified(lastModified);
-                            imageNoteDialog.show(getActivity().getSupportFragmentManager(), ImageNoteDialog.class.getSimpleName());
-                        }
-
-                        @Override
-                        public void onFail() {
-
-                        }
-                    });
-    }
-
-    private void showAlertNotImage() {
-        SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getActivity(), SweetAlertDialog.WARNING_TYPE);
-        sweetAlertDialog.setTitle(R.string.import_image);
-        sweetAlertDialog.setContentText(getString(R.string.import_not_image));
-        sweetAlertDialog.setConfirmText(getString(R.string.str_ok));
-        sweetAlertDialog.show();
-    }
-
-    private void showAlertImportSuccess() {
-        SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getActivity(), SweetAlertDialog.SUCCESS_TYPE);
-        sweetAlertDialog.setTitle(R.string.import_image);
-        sweetAlertDialog.setContentText(getString(R.string.import_success));
-        sweetAlertDialog.setConfirmText(getString(R.string.str_ok));
-        sweetAlertDialog.show();
+            ((MainActivity) getActivity()).importImage();
     }
 
     private void showPassCodeSettings(boolean setEnablePassCodeAfterDone) {

@@ -23,7 +23,7 @@
         android:id="@+id/view2"
         android:layout_width="2dp"
         android:layout_height="0dp"
-        android:background="@color/gray"
+        android:background="@drawable/dash_blue"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/view"
         app:layout_constraintStart_toStartOf="@+id/view"

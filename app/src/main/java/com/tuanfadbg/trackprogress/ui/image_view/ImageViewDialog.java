@@ -84,6 +84,7 @@ public class ImageViewDialog extends DialogFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         imageView = view.findViewById(R.id.imageView);
+        imageView.setMaxZoom(100f);
         ctBottom = view.findViewById(R.id.ct_bottom);
         txtTitle = view.findViewById(R.id.txt_title);
 
