@@ -18,9 +18,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -98,14 +98,23 @@ public class DrawImageActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) mPhotoEditorView.getLayoutParams();
-                        if ((float) screenWidth / (float) screenHeight < (float) myBitmap.getWidth() / (float) myBitmap.getHeight()) {
-                            layoutParams.width = screenWidth;
-                            layoutParams.height = (int) ((float) screenWidth * (float) myBitmap.getHeight() / (float) myBitmap.getWidth());
+                        int width = screenWidth;
+                        int height = screenHeight;
+
+                        if (mPhotoEditorView.getWidth() != 0)
+                            width = mPhotoEditorView.getWidth();
+                        if (mPhotoEditorView.getHeight() != 0)
+                            height = mPhotoEditorView.getHeight();
+
+                        Log.e(TAG, "run: " + width + " " + height );
+                        if ((float) width / (float) height < (float) myBitmap.getWidth() / (float) myBitmap.getHeight()) {
+                            layoutParams.width = width;
+                            layoutParams.height = (int) ((float) width * (float) myBitmap.getHeight() / (float) myBitmap.getWidth());
                         } else {
-                            layoutParams.height = screenHeight;
-                            layoutParams.width = (int) ((float) screenHeight * (float) myBitmap.getWidth() / (float) myBitmap.getHeight());
+                            layoutParams.height = height;
+                            layoutParams.width = (int) ((float) height * (float) myBitmap.getWidth() / (float) myBitmap.getHeight());
                         }
-                        Log.e(TAG, "init: " + layoutParams.width + " " + layoutParams.height);
+//                        Log.e(TAG, "init: " + layoutParams.width + " " + layoutParams.height);
                         mPhotoEditorView.setLayoutParams(layoutParams);
                         progressBar.setVisibility(View.GONE);
                         mPhotoEditorView.getSource().setImageBitmap(myBitmap);
@@ -185,7 +194,10 @@ public class DrawImageActivity extends AppCompatActivity {
             resetSelectTools();
             v.setSelected(true);
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(DrawImageActivity.this, getString(R.string.fail_to_save_your_image), Toast.LENGTH_LONG).show();
+//                Toast.makeText(DrawImageActivity.this, getString(R.string.fail_to_save_your_image), Toast.LENGTH_LONG).show();
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        1);
                 return;
             }
             mPhotoEditor.saveAsFile(filePath, new PhotoEditor.OnSaveListener() {
@@ -209,6 +221,7 @@ public class DrawImageActivity extends AppCompatActivity {
         });
     }
 
+
     private void brush() {
         mPhotoEditor.setBrushDrawingMode(true);
         mPhotoEditor.setBrushSize(brushSize);
@@ -220,5 +233,12 @@ public class DrawImageActivity extends AppCompatActivity {
         imgErase.setSelected(false);
         imgText.setSelected(false);
         imgSave.setSelected(false);
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        imgSave.performClick();
     }
 }
