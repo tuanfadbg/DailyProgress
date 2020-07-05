@@ -42,6 +42,7 @@ public class CheckPasscodeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_passcode);
+
         ctPlash = findViewById(R.id.ct_splash);
         ctPasscode = findViewById(R.id.ct_passcode);
         viewLeft = findViewById(R.id.view_left);
@@ -203,8 +204,8 @@ public class CheckPasscodeActivity extends AppCompatActivity {
 
         view.findViewById(R.id.img_backspace).setOnClickListener(v -> backspace());
         view.findViewById(R.id.txt_forgot_password).setOnClickListener(v -> forgotPassword());
-        view.findViewById(R.id.img_check_fingerprint).setOnClickListener(v -> fingerprint());
-        fingerprint();
+        view.findViewById(R.id.img_check_fingerprint).setOnClickListener(v -> checkBiometric());
+        checkBiometric();
     }
 
     private Executor executor;
@@ -212,7 +213,7 @@ public class CheckPasscodeActivity extends AppCompatActivity {
     private BiometricPrompt biometricPrompt;
     private BiometricPrompt.PromptInfo promptInfo;
 
-    private void fingerprint() {
+    private void checkBiometric() {
 //        ((ImageView) view.findViewById(R.id.img_fingerprint)).setColorFilter(ContextCompat.getColor(this, R.color.blue_dark), android.graphics.PorterDuff.Mode.MULTIPLY);
 
         executor = ContextCompat.getMainExecutor(this);

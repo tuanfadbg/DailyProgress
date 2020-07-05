@@ -88,7 +88,9 @@ public class ImageViewDialog extends DialogFragment {
         ctBottom = view.findViewById(R.id.ct_bottom);
         txtTitle = view.findViewById(R.id.txt_title);
 
-        txtTitle.setText(item.title);
+        if (item == null)
+            return;
+        txtTitle.setText((TextUtils.isEmpty(item.title) ? "" : item.title));
         Glide.with(imageView).load(new File(item.file)).signature(new ObjectKey(new Date().getTime())).into(imageView);
 
         imageView.setOnClickListener(v -> {

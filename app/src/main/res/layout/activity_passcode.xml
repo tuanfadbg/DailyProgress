@@ -93,8 +93,7 @@
 
         <include
             android:id="@+id/include"
-            layout="@layout/layout_keyboard"
-            tools:layout_editor_absoluteY="229dp" />
+            layout="@layout/layout_keyboard" />
 
         <ImageView
             android:id="@+id/img_check_fingerprint"

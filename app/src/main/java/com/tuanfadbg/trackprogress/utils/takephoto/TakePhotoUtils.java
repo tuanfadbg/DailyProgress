@@ -299,35 +299,43 @@ public class TakePhotoUtils {
                 List<String> imagesEncodedList = new ArrayList<>();
                 List<Long> lastModifieds = new ArrayList<>();
                 for (int i = 0; i < mClipData.getItemCount(); i++) {
+                    try {
+                        ClipData.Item item = mClipData.getItemAt(i);
+                        Uri uri = item.getUri();
+                        mArrayUri.add(uri);
+                        String[] filePathColumn = {MediaStore.Images.Media.DATA, DocumentsContract.Document.COLUMN_LAST_MODIFIED};
+                        // Get the cursor
+                        Cursor cursor = activity.getContentResolver().query(uri, filePathColumn, null, null, null);
+                        // Move to first row
+                        cursor.moveToFirst();
 
-                    ClipData.Item item = mClipData.getItemAt(i);
-                    Uri uri = item.getUri();
-                    mArrayUri.add(uri);
-                    String[] filePathColumn = {MediaStore.Images.Media.DATA, DocumentsContract.Document.COLUMN_LAST_MODIFIED};
-                    // Get the cursor
-                    Cursor cursor = activity.getContentResolver().query(uri, filePathColumn, null, null, null);
-                    // Move to first row
-                    cursor.moveToFirst();
+                        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                        int columnIndex1 = cursor.getColumnIndex(filePathColumn[1]);
+                        imageEncoded = cursor.getString(columnIndex);
+                        imagesEncodedList.add(imageEncoded);
 
-                    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                    int columnIndex1 = cursor.getColumnIndex(filePathColumn[1]);
-                    imageEncoded = cursor.getString(columnIndex);
-                    imagesEncodedList.add(imageEncoded);
+                        String lastModifiedString = cursor.getString(columnIndex1);
+                        lastModifieds.add(TextUtils.isEmpty(lastModifiedString) ? 0 : Long.valueOf(lastModifiedString));
+                        cursor.close();
+                    } catch (Exception e) {
+                        lastModifieds.add(0L);
+                    }
 
-                    String lastModifiedString = cursor.getString(columnIndex1);
-                    lastModifieds.add(TextUtils.isEmpty(lastModifiedString) ? 0 : Long.valueOf(lastModifiedString));
-                    cursor.close();
                 }
                 takePhotoCallback.onMultipleSuccess(imagesEncodedList, mArrayUri, lastModifieds);
                 return;
             } else if (data.getData() != null) {
                 selectedImage = data.getData();
-                String[] filePathColumn = {DocumentsContract.Document.COLUMN_LAST_MODIFIED};
-                Cursor cursor = activity.getContentResolver().query(selectedImage, filePathColumn, null, null, null);
-                cursor.moveToFirst();
-                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                String lastModifiedString = cursor.getString(columnIndex);
-                lastModifed = TextUtils.isEmpty(lastModifiedString) ? 0 : Long.valueOf(lastModifiedString);
+                try {
+                    String[] filePathColumn = {DocumentsContract.Document.COLUMN_LAST_MODIFIED};
+                    Cursor cursor = activity.getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+                    cursor.moveToFirst();
+                    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                    String lastModifiedString = cursor.getString(columnIndex);
+                    lastModifed = TextUtils.isEmpty(lastModifiedString) ? 0 : Long.valueOf(lastModifiedString);
+                } catch (Exception e) {
+                    lastModifed = 0;
+                }
                 if (selectedImage != null) {
                     setResultImagePath(null, selectedImage);
                 }

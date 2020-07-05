@@ -457,7 +457,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public int getCurrentTagSelected() {
-        return currentTagSelected;
+        return currentTagSelected == null ? 0 : currentTagSelected;
     }
 
     public void setOnPermissionGranted(OnPermissionGranted onPermissionGranted) {
