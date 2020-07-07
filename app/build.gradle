@@ -71,4 +71,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-crashlytics:17.0.1'
 
     implementation 'androidx.biometric:biometric:1.0.1'
+    implementation 'me.zhanghai.android.materialratingbar:library:1.4.0'
 }

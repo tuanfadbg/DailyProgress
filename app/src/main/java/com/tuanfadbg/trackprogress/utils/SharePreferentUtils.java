@@ -1,6 +1,7 @@
 package com.tuanfadbg.trackprogress.utils;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
 
@@ -22,6 +23,8 @@ public class SharePreferentUtils {
     public static final String TEMP_PASSCODE = "TEMP_PASSCODE";
     public static final String EMAIL = "EMAIL";
     public static final String NAME = "NAME";
+    public static final String RATE = "RATE";
+    public static final String COUNT_SHOW_RATE = "COUNT_SHOW_RATE";
 
     public static void initial(Context context) {
         mContext = context;
@@ -109,7 +112,40 @@ public class SharePreferentUtils {
         return (String) SharePreferentUtils.getSharedPreference(NAME, hasDefault ? mContext.getString(R.string.default_name) : "");
     }
 
-    public static Object getSharedPreference(String keyPref, Object defaultValue) {
+    public static void disableShowRate() {
+        SharePreferentUtils.setSharedPreference(RATE, false);
+    }
+
+    public static boolean shouldShowRate() {
+        if (!isPremium() && isShowRate()) {
+            boolean showRate = false;
+            int count = getCountShowRate();
+
+            if (count < 15 && new Random().nextInt(1000) > 850 + count * 10) {
+                showRate = true;
+            }
+            if (showRate) {
+                increaseCountShowRate();
+            }
+            return showRate;
+        }
+        return false;
+    }
+
+    private static boolean isShowRate() {
+        return (boolean) SharePreferentUtils.getSharedPreference(RATE, true);
+    }
+
+    private static int getCountShowRate() {
+        return (int) SharePreferentUtils.getSharedPreference(COUNT_SHOW_RATE, 0);
+    }
+
+    private static void increaseCountShowRate() {
+        SharePreferentUtils.setSharedPreference(COUNT_SHOW_RATE, getCountShowRate() + 1);
+    }
+
+
+    private static Object getSharedPreference(String keyPref, Object defaultValue) {
         SharedPreferences pref;
         try {
             pref = sReferrerPrefs.get();

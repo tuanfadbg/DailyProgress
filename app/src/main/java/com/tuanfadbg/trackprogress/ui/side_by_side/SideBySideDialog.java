@@ -125,8 +125,8 @@ public class SideBySideDialog extends DialogFragment {
         progressBar = view.findViewById(R.id.progressBar);
 
         if (items != null) {
-            itemLeft = items.get(0);
-            itemRight = items.get(items.size() - 1);
+            itemLeft = items.get(items.size() - 1);;
+            itemRight = items.get(0);
             tagId = itemLeft.tag;
             initData();
             createBitmap();
@@ -135,12 +135,12 @@ public class SideBySideDialog extends DialogFragment {
             ItemSelectAsyncTask itemSelectAsyncTask = new ItemSelectAsyncTask(getContext());
             itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, tagId, datas -> {
                 this.items = datas;
-                if (item.uid == items.get(items.size() - 1).uid) { // neu item la latest
-                    itemLeft = items.get(0);
+                if (item.uid == items.get(0).uid) { // neu item la latest
                     itemRight = item;
+                    itemLeft = items.get(items.size() - 1);
                 } else {
                     itemLeft = item;
-                    itemRight = items.get(items.size() - 1);
+                    itemRight = items.get(0);
                 }
                 initData();
                 createBitmap();

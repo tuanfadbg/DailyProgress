@@ -53,4 +53,12 @@
         <item name="android:textColor">@color/blue_dark</item>
         <item name="android:textSize">35dp</item>
     </style>
+
+    <style name="RatingBar">
+        <item name="colorControlNormal">@color/color_gray</item>
+        <item name="colorControlActivated">#f49f00</item>
+    </style>
+
+    <color name="color_gray">#FFB4B4B4</color>
+
 </resources>
