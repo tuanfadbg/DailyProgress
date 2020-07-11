@@ -36,6 +36,7 @@ import java.util.List;
 public class RateDialog extends DialogFragment {
 
     public static final String TAG = RateDialog.class.getSimpleName();
+    public OnRateListener onRateListener;
 
     public RateDialog() {
 
@@ -74,21 +75,23 @@ public class RateDialog extends DialogFragment {
         txtOk.setOnClickListener(v -> {
             if (ratingBar.getRating() == 0) {
                 Toast toast = Toast.makeText(getActivity(), getString(R.string.please_give_5_star), Toast.LENGTH_SHORT);
-                toast.setGravity(Gravity.TOP, 0, 100);
                 toast.show();
                 return;
             }
             if (ratingBar.getRating() > 4) {
                 openRateApp();
-                SharePreferentUtils.disableShowRate();
             } else {
                 Toast toast = Toast.makeText(getActivity(), getString(R.string.thanks_for_your_feed_back), Toast.LENGTH_LONG);
-                toast.setGravity(Gravity.TOP, 0, 100);
                 toast.show();
             }
+            SharePreferentUtils.disableShowRate();
+            if (onRateListener != null)
+                onRateListener.onRate(ratingBar.getRating());
             dismiss();
         });
         txtCancel.setOnClickListener(v -> {
+            if (onRateListener != null)
+                onRateListener.onCancel();
             dismiss();
         });
     }
@@ -106,5 +109,15 @@ public class RateDialog extends DialogFragment {
             context.startActivity(new Intent(Intent.ACTION_VIEW,
                     Uri.parse("http://play.google.com/store/apps/details?id=" + context.getPackageName())));
         }
+    }
+
+    public void setOnRateListener(OnRateListener onRateListener) {
+        this.onRateListener = onRateListener;
+    }
+
+    public interface OnRateListener {
+        void onRate(float star);
+
+        void onCancel();
     }
 }

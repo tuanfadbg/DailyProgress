@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.dx.command.Main;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.tuanfadbg.trackprogress.beforeafterimage.BuildConfig;
@@ -38,6 +39,7 @@ import com.tuanfadbg.trackprogress.ui.image_view.ImageViewDialog;
 import com.tuanfadbg.trackprogress.ui.import_image.ImportImageDialog;
 import com.tuanfadbg.trackprogress.ui.main_grid.DataGridAdapter;
 import com.tuanfadbg.trackprogress.ui.main_list.TimelineListAdapter;
+import com.tuanfadbg.trackprogress.ui.rate.RateDialog;
 import com.tuanfadbg.trackprogress.ui.settings.SettingsDialog;
 import com.tuanfadbg.trackprogress.ui.side_by_side.SideBySideDialog;
 import com.tuanfadbg.trackprogress.utils.SharePreferentUtils;
@@ -466,6 +468,29 @@ public class MainActivity extends AppCompatActivity {
 
     public interface OnPermissionGranted {
         void onPermissionGranted();
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        if (SharePreferentUtils.shouldShowRate()) {
+            RateDialog rateDialog = new RateDialog();
+            rateDialog.setOnRateListener(new RateDialog.OnRateListener() {
+                @Override
+                public void onRate(float star) {
+                    if (star == 5)
+                        onBackPressed();
+                }
+
+                @Override
+                public void onCancel() {
+                    MainActivity.super.onBackPressed();
+                }
+            });
+            rateDialog.show(getSupportFragmentManager(), RateDialog.class.getSimpleName());
+            return;
+        }
+        super.onBackPressed();
     }
 
     @Override

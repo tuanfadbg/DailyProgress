@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
 
@@ -14,6 +15,7 @@ import java.util.concurrent.Future;
 
 public class SharePreferentUtils {
     private static final SharedPreferencesLoader sPrefsLoader = new SharedPreferencesLoader();
+    private static final String TAG = SharePreferentUtils.class.getSimpleName();
     private static Future<SharedPreferences> sReferrerPrefs;
     private static Context mContext;
     public static final String IS_FIRST_OPEN = "IS_FIRST_OPEN";
@@ -117,11 +119,13 @@ public class SharePreferentUtils {
     }
 
     public static boolean shouldShowRate() {
+//        Log.e(TAG, "checkRandom: " + (!isPremium() && isShowRate()));
         if (!isPremium() && isShowRate()) {
             boolean showRate = false;
             int count = getCountShowRate();
-
-            if (count < 15 && new Random().nextInt(1000) > 850 + count * 10) {
+            boolean isRandomTrue = new Random().nextInt(1000) > 500 + count * 50;
+//            Log.e(TAG, "shouldShowRate: " + count + " " + isRandomTrue);
+            if (count < 10 && isRandomTrue) {
                 showRate = true;
             }
             if (showRate) {
