@@ -342,9 +342,9 @@ public class TakePhotoUtils {
             }
 
             decodeFileAndGetInfomation();
-            if (isPortrait) {
-                convertImageToPortrait();
-            }
+//            if (isPortrait) {
+            convertImageToPortrait();
+//            }
 //            if (isHasOptions) {
 //                if (resultBitmap == null) {
 //                    if (takePhotoCallback != null)

@@ -8,7 +8,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,6 +31,8 @@ import com.tuanfadbg.trackprogress.ui.draw_image.DrawImageActivity;
 import com.tuanfadbg.trackprogress.ui.image_note.ImageNoteDialog;
 import com.tuanfadbg.trackprogress.ui.side_by_side.SideBySideDialog;
 import com.tuanfadbg.trackprogress.utils.FileManager;
+import com.tuanfadbg.trackprogress.utils.RotateTransformation;
+import com.tuanfadbg.trackprogress.utils.SharePreferentUtils;
 import com.yalantis.ucrop.UCrop;
 
 import java.io.File;
@@ -80,18 +81,23 @@ public class ImageViewDialog extends DialogFragment {
         return view;
     }
 
+    long timeView = new Date().getTime();
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         imageView = view.findViewById(R.id.imageView);
         imageView.setMaxZoom(100f);
+        imageView.setDoubleTapScale(10f);
         ctBottom = view.findViewById(R.id.ct_bottom);
         txtTitle = view.findViewById(R.id.txt_title);
 
         if (item == null)
             return;
         txtTitle.setText((TextUtils.isEmpty(item.title) ? "" : item.title));
-        Glide.with(imageView).load(new File(item.file)).signature(new ObjectKey(new Date().getTime())).into(imageView);
+        Glide.with(imageView)
+                .load(new File(item.file))
+                .signature(new ObjectKey(timeView))
+                .into(imageView);
 
         imageView.setOnClickListener(v -> {
             if (ctBottom.getVisibility() == View.VISIBLE)
@@ -100,6 +106,8 @@ public class ImageViewDialog extends DialogFragment {
                 ctBottom.setVisibility(View.VISIBLE);
         });
 
+        view.findViewById(R.id.img_rotate_left).setOnClickListener(v -> rotateLeft());
+        view.findViewById(R.id.img_rotate_right).setOnClickListener(v -> rotateRight());
         view.findViewById(R.id.img_compare).setOnClickListener(v -> compare());
         view.findViewById(R.id.img_back).setOnClickListener(v -> dismiss());
         view.findViewById(R.id.img_comment).setOnClickListener(v -> edit());
@@ -115,6 +123,26 @@ public class ImageViewDialog extends DialogFragment {
         if (txtTitle.getMaxLines() < 10)
             txtTitle.setMaxLines(Integer.MAX_VALUE);
         else txtTitle.setMaxLines(2);
+    }
+
+    private float rotateAngle = 0f;
+
+    private void rotateLeft() {
+        rotateAngle = (rotateAngle - 90f) % 360f;
+        Glide.with(getContext())
+                .load(new File(item.file))
+                .signature(new ObjectKey(timeView))
+                .transform(new RotateTransformation(getContext(), rotateAngle))
+                .into(imageView);
+    }
+
+    private void rotateRight() {
+        rotateAngle = (rotateAngle + 90f) % 360f;
+        Glide.with(getContext())
+                .load(new File(item.file))
+                .signature(new ObjectKey(timeView))
+                .transform(new RotateTransformation(getContext(), rotateAngle))
+                .into(imageView);
     }
 
     private void edit() {
@@ -135,7 +163,7 @@ public class ImageViewDialog extends DialogFragment {
     private File tempFile;
 
     private void crop() {
-        tempFile = new FileManager(getActivity()).getNewFileInPrivateStorate();
+        tempFile = new FileManager(getActivity()).getNewFileInPrivateStorage();
         UCrop.of(Uri.fromFile(new File(item.file)), Uri.fromFile(tempFile))
 
 //                .withAspectRatio(16, 9)
@@ -178,6 +206,8 @@ public class ImageViewDialog extends DialogFragment {
             File src = new File(item.file);
             fileManager.createFolder();
             File dest = fileManager.getOutputMediaFile();
+            SharePreferentUtils.insertImagePathHaveToRemove(dest.getAbsolutePath());
+
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -267,7 +297,6 @@ public class ImageViewDialog extends DialogFragment {
                 Glide.with(imageView).load(new File(item.file)).signature(new ObjectKey(new Date().getTime())).into(imageView);
             }
         }
-
     }
 
     public void setItem(Item item) {

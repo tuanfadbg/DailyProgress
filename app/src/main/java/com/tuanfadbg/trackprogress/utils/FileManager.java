@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class FileManager {
     private Activity activity;
@@ -52,6 +53,12 @@ public class FileManager {
         }
         return "";
     }
+
+    public File getNewFile() {
+        createFolder();
+        return getOutputMediaFile();
+    }
+
 
     public String storeImageWithoutBroadcast(Bitmap image) {
         createFolder();
@@ -111,7 +118,7 @@ public class FileManager {
         return true;
     }
 
-    private void sendBroadcastScanFile(File pictureFile) {
+    public void sendBroadcastScanFile(File pictureFile) {
         activity.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(pictureFile.getAbsolutePath()))));
         MediaScannerConnection.scanFile(
                 activity, new String[]{pictureFile.getAbsolutePath()}, null,
@@ -120,7 +127,7 @@ public class FileManager {
     }
 
     public File storeImageOnPrivateStorage(Bitmap bitmapImage) {
-        File mypath = getNewFileInPrivateStorate();
+        File mypath = getNewFileInPrivateStorage();
 
         FileOutputStream fos = null;
         try {
@@ -144,7 +151,8 @@ public class FileManager {
         File directory = cw.getDir("data", Context.MODE_PRIVATE);
         return directory;
     }
-    public File getNewFileInPrivateStorate() {
+
+    public File getNewFileInPrivateStorage() {
         ContextWrapper cw = new ContextWrapper(activity);
         File directory = cw.getDir("data", Context.MODE_PRIVATE);
         return new File(directory, "image_" + new Date().getTime() + ".jpg");
@@ -186,7 +194,7 @@ public class FileManager {
             int read;
             byte[] buffer = new byte[8 * 1024];
 
-            targetFile = getNewFileInPrivateStorate();
+            targetFile = getNewFileInPrivateStorage();
             OutputStream outputStream = new FileOutputStream(targetFile);
 
             while ((read = inputStream.read(buffer)) != -1) {
@@ -204,7 +212,7 @@ public class FileManager {
         return targetFile;
     }
 
-    public  void copyFile(File sourceFile, File destFile) throws IOException {
+    public void copyFile(File sourceFile, File destFile) throws IOException {
         if (!destFile.getParentFile().exists())
             destFile.getParentFile().mkdirs();
 
@@ -239,5 +247,19 @@ public class FileManager {
             }
         }
         return true;
+    }
+
+    public static void removeOldImage() {
+        try {
+            List<String> dataOldImage = SharePreferentUtils.getImagePathHaveToRemoveArray();
+            if (dataOldImage != null && dataOldImage.size() > 0)
+                for (String item : dataOldImage) {
+                    File file = new File(item);
+                    if (file.exists())
+                        file.delete();
+                }
+        } catch (Exception ignored) {
+
+        }
     }
 }

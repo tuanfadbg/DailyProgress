@@ -8,6 +8,9 @@ import android.util.Log;
 
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -27,6 +30,7 @@ public class SharePreferentUtils {
     public static final String NAME = "NAME";
     public static final String RATE = "RATE";
     public static final String COUNT_SHOW_RATE = "COUNT_SHOW_RATE";
+    public static final String PATH_TO_REMOVE = "PATH_TO_REMOVE";
 
     public static void initial(Context context) {
         mContext = context;
@@ -50,6 +54,26 @@ public class SharePreferentUtils {
 
     public static void setPremium(boolean isPremium) {
         SharePreferentUtils.setSharedPreference(IS_PREMIUM, isPremium);
+    }
+
+    public static List<String> getImagePathHaveToRemoveArray() {
+        try {
+            String data = getImagePathHaveToRemove();
+            String[] array = data.split(",");
+            return Arrays.asList(array);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static String getImagePathHaveToRemove() {
+        return (String) SharePreferentUtils.getSharedPreference(PATH_TO_REMOVE, "");
+    }
+
+    public static void insertImagePathHaveToRemove(String pathToRemove) {
+        String data = getImagePathHaveToRemove();
+        data += "," + pathToRemove;
+        SharePreferentUtils.setSharedPreference(PATH_TO_REMOVE, data);
     }
 
     public static boolean isPasscodeEnable() {

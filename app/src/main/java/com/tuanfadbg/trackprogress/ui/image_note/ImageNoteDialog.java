@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.DialogFragment;
 
 import com.bumptech.glide.Glide;
@@ -28,6 +29,7 @@ import com.tuanfadbg.trackprogress.database.tag.Tag;
 import com.tuanfadbg.trackprogress.database.tag.TagSelectAllAsyncTask;
 import com.tuanfadbg.trackprogress.ui.MainActivity;
 import com.tuanfadbg.trackprogress.ui.add_tag.AddTagDialog;
+import com.tuanfadbg.trackprogress.utils.CameraTransformation;
 import com.tuanfadbg.trackprogress.utils.FileManager;
 
 import java.io.File;
@@ -111,16 +113,29 @@ public class ImageNoteDialog extends DialogFragment {
 //        txtAddTag = view.findViewById(R.id.txt_add_tag);
         txtMoreImage = view.findViewById(R.id.txt_more_image);
 
-        if (bitmap != null)
-            imageView.setImageBitmap(bitmap);
-        else if (multiImageSelected != null) {
+        if (bitmap != null) {
+//            imageView.setImageBitmap(bitmap);
+            Glide.with(this)
+                    .load(bitmap)
+//                    .transform(new CameraTransformation(getContext(), 90))
+                    .into(imageView);
+        } else if (multiImageSelected != null) {
             if (multiImageSelected.size() > 1) {
                 txtMoreImage.setVisibility(View.VISIBLE);
                 txtMoreImage.setText(String.format(Locale.US, "+%d", multiImageSelected.size() - 1));
             }
-            Glide.with(this).load(multiImageSelected.get(0)).signature(new ObjectKey(new Date().getTime())).into(imageView);
+            Glide.with(this)
+                    .load(multiImageSelected.get(0))
+                    .signature(new ObjectKey(new Date().getTime()))
+                    .transform(new CameraTransformation(multiImageSelected.get(0)))
+                    .into(imageView);
+
         } else if (item != null) {
-            Glide.with(this).load(item.file).signature(new ObjectKey(new Date().getTime())).into(imageView);
+            Glide.with(this)
+                    .load(item.file)
+                    .signature(new ObjectKey(new Date().getTime()))
+//                    .transform(new CameraTransformation(getContext(), 90))
+                    .into(imageView);
             ((TextView) view.findViewById(R.id.txt_delete)).setText(R.string.close);
             edtNote.setText(item.title);
         }
@@ -133,7 +148,6 @@ public class ImageNoteDialog extends DialogFragment {
         view.findViewById(R.id.constraintLayout).setOnClickListener(v -> {});
         view.findViewById(R.id.imageView).setOnClickListener(v -> {});
         view.setOnClickListener(v -> dismiss());
-
     }
 
     private void updateRecommendTag() {

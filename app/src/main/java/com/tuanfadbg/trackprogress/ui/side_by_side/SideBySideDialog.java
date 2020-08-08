@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.media.ExifInterface;
 import android.net.Uri;
@@ -25,6 +26,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.content.res.ResourcesCompat;
@@ -34,13 +36,20 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.signature.ObjectKey;
 import com.ortiz.touchview.TouchImageView;
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
+import com.tuanfadbg.trackprogress.database.Data;
+import com.tuanfadbg.trackprogress.database.OnUpdateDatabase;
 import com.tuanfadbg.trackprogress.database.item.Item;
 import com.tuanfadbg.trackprogress.database.item.ItemSelectAsyncTask;
+import com.tuanfadbg.trackprogress.database.item.ItemUpdateAsyncTask;
 import com.tuanfadbg.trackprogress.ui.MainActivity;
+import com.tuanfadbg.trackprogress.ui.draw_image.DrawImageActivity;
 import com.tuanfadbg.trackprogress.ui.select_image.SelectImageDialog;
 import com.tuanfadbg.trackprogress.utils.FileManager;
+import com.tuanfadbg.trackprogress.utils.Logger;
 import com.tuanfadbg.trackprogress.utils.RotateTransformation;
+import com.tuanfadbg.trackprogress.utils.SharePreferentUtils;
 import com.tuanfadbg.trackprogress.utils.Utils;
+import com.yalantis.ucrop.UCrop;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -50,6 +59,8 @@ import java.util.Date;
 import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+
+import static android.app.Activity.RESULT_OK;
 
 public class SideBySideDialog extends DialogFragment {
 
@@ -101,10 +112,13 @@ public class SideBySideDialog extends DialogFragment {
         setStyle(DialogFragment.STYLE_NORMAL, R.style.AppTheme_FullScreenDialog);
     }
 
+    View view;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         View view = inflater.inflate(R.layout.dialog_side_by_side, container, false);
+        this.view = view;
         return view;
     }
 
@@ -121,11 +135,17 @@ public class SideBySideDialog extends DialogFragment {
         imageView.setMaxZoom(100f);
         imageView1.setMaxZoom(100f);
         imageView2.setMaxZoom(100f);
+
+        imageView.setDoubleTapScale(10f);
+        imageView1.setDoubleTapScale(10f);
+        imageView2.setDoubleTapScale(10f);
+
         imgSettings = view.findViewById(R.id.img_settings);
         progressBar = view.findViewById(R.id.progressBar);
 
         if (items != null) {
-            itemLeft = items.get(items.size() - 1);;
+            itemLeft = items.get(items.size() - 1);
+            ;
             itemRight = items.get(0);
             tagId = itemLeft.tag;
             initData();
@@ -266,6 +286,8 @@ public class SideBySideDialog extends DialogFragment {
         setImageByType();
     }
 
+    File tempFile;
+
     private void save() {
         if (FileManager.isWriteStoragePermissionGranted(getActivity())) {
             SweetAlertDialog pDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
@@ -273,22 +295,41 @@ public class SideBySideDialog extends DialogFragment {
             pDialog.setTitleText(getString(R.string.loading));
             pDialog.setCancelable(false);
             pDialog.show();
-
             AsyncTask.execute(() -> {
                 FileManager qrFileManager = new FileManager(getActivity());
-                String imagePath = qrFileManager.storeImage(resultbitmap);
+                if (viewType == VIEW_TYPE_ZOOM_EACH_IMAGE) {
+                    tempFile = qrFileManager.storeImageOnPrivateStorage(mergeBitmap2(itemLeft, itemRight));
+                    SharePreferentUtils.insertImagePathHaveToRemove(tempFile.getPath());
                 if (SideBySideDialog.this.getActivity() != null)
                     SideBySideDialog.this.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            pDialog
-                                    .setTitleText(getString(R.string.saved))
-                                    .setContentText(getString(R.string.image_saved))
-                                    .setConfirmText(getString(R.string.str_ok))
-                                    .setConfirmClickListener(null)
-                                    .changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
+                            pDialog.dismiss();
                         }
                     });
+                    File destFile = new FileManager(getActivity()).getNewFile();
+                    UCrop.of(Uri.fromFile(tempFile), Uri.fromFile(destFile))
+
+//                .withAspectRatio(16, 9)
+//                .withMaxResultSize(maxWidth, maxHeight)
+                            .start(getContext(), this);
+                    return;
+                } else {
+                    String imagePath = qrFileManager.storeImage(resultbitmap);
+                }
+
+//                if (SideBySideDialog.this.getActivity() != null)
+//                    SideBySideDialog.this.getActivity().runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            pDialog
+//                                    .setTitleText(getString(R.string.saved))
+//                                    .setContentText(getString(R.string.image_saved))
+//                                    .setConfirmText(getString(R.string.str_ok))
+//                                    .setConfirmClickListener(null)
+//                                    .changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
+//                        }
+//                    });
             });
         } else {
             ((MainActivity) getActivity()).setOnPermissionGranted(new MainActivity.OnPermissionGranted() {
@@ -301,6 +342,98 @@ public class SideBySideDialog extends DialogFragment {
         }
     }
 
+    public Bitmap mergeBitmap2(Item itemLeft, Item itemRight) {
+
+        RectF rectLeftZoomRatio = imageView1.getZoomedRect();
+        RectF rectRightZoomRatio = imageView2.getZoomedRect();
+
+
+        Logger.e("save 1: " + rectLeftZoomRatio.toShortString());
+        Logger.e("save 2: " + rectRightZoomRatio.toShortString());
+
+        Bitmap left, right;
+        left = loadImageFromStorage(itemLeft.file, imgLeftRotate);
+        right = loadImageFromStorage(itemRight.file, imgRightRotate);
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+
+        Bitmap comboBitmap;
+        int width, height;
+
+        int leftWidth = (int) ((rectLeftZoomRatio.right - rectLeftZoomRatio.left) * left.getWidth());
+        int rightWidth = (int) ((rectRightZoomRatio.right - rectRightZoomRatio.left) * right.getWidth());
+
+        Logger.e(leftWidth + " " + rightWidth);
+        if (leftWidth > rightWidth)
+            width = leftWidth * 2;
+        else {
+            width = rightWidth * 2;
+        }
+
+        int leftHeight = (int) ((rectLeftZoomRatio.bottom - rectLeftZoomRatio.top) * left.getHeight());
+        int rightHeight = (int) ((rectRightZoomRatio.bottom - rectRightZoomRatio.top) * right.getHeight());
+//        Logger.e(leftHeight + " " + rightHeight);
+//
+//        if (leftHeight > rightHeight)
+//            height = leftHeight;
+//        else {
+//            height = rightHeight;
+//        }
+
+        int calculateHeight1 = (int) ((float) width / (float) leftWidth * (float) leftHeight / 2f);
+        int calculateHeight2 = (int) ((float) width / (float) rightWidth * (float) rightHeight / 2f);
+
+        if (calculateHeight1 > calculateHeight2) {
+            height = calculateHeight1;
+        } else {
+            height = calculateHeight2;
+        }
+
+
+        Rect rect1 = new Rect(0, 0, width / 2, calculateHeight1);
+        Rect rect2 = new Rect(width / 2, 0, width, calculateHeight2);
+
+        if (height > calculateHeight1) {
+            rect1.top = (height - calculateHeight1) / 2;
+            rect1.bottom = rect1.top + calculateHeight1;
+        }
+
+        if (height > calculateHeight2) {
+            rect2.top = (height - calculateHeight2) / 2;
+            rect2.bottom = rect2.top + calculateHeight2;
+        }
+
+        comboBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Paint paint = new Paint();
+        paint.setColor(Color.WHITE);
+        Canvas canvas = new Canvas(comboBitmap);
+        canvas.drawPaint(paint);
+
+        Bitmap leftBitmapZoom = Bitmap.createBitmap(
+                left,
+                (int) (left.getWidth() * rectLeftZoomRatio.left),
+                (int) (left.getHeight() * rectLeftZoomRatio.top),
+                (int) (left.getWidth() * (rectLeftZoomRatio.right - rectLeftZoomRatio.left)),
+                (int) (left.getHeight() * (rectLeftZoomRatio.bottom - rectLeftZoomRatio.top))
+        );
+
+        canvas.drawBitmap(leftBitmapZoom, null, rect1, null);
+
+        Bitmap rightBitmapZoom = Bitmap.createBitmap(
+                right,
+                (int) (right.getWidth() * rectRightZoomRatio.left),
+                (int) (right.getHeight() * rectRightZoomRatio.top),
+                (int) (right.getWidth() * (rectRightZoomRatio.right - rectRightZoomRatio.left)),
+                (int) (right.getHeight() * (rectRightZoomRatio.bottom - rectRightZoomRatio.top))
+        );
+
+        canvas.drawBitmap(rightBitmapZoom, null, rect2, null);
+
+        comboBitmap = Bitmap.createScaledBitmap(comboBitmap, width, height, true);
+        return comboBitmap;
+    }
+
     private void share() {
         if (FileManager.isWriteStoragePermissionGranted(getActivity())) {
             SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE);
@@ -310,6 +443,8 @@ public class SideBySideDialog extends DialogFragment {
             AsyncTask.execute(() -> {
                 FileManager fileManager = new FileManager(getActivity());
                 String fileName = fileManager.storeImageWithoutBroadcast(resultbitmap);
+                SharePreferentUtils.insertImagePathHaveToRemove(fileName);
+
                 shareImage(new File(fileName));
                 if (SideBySideDialog.this.getActivity() != null)
                     SideBySideDialog.this.getActivity().runOnUiThread(new Runnable() {
@@ -345,6 +480,7 @@ public class SideBySideDialog extends DialogFragment {
         selectImageDialog = new SelectImageDialog(tagId, item -> {
             if (selectImageDialog != null)
                 selectImageDialog.dismiss();
+            imgRightRotate = 0f;
             itemRight = item;
             time2 = Utils.getTimeFromLong(itemRight.createAt);
             createBitmap();
@@ -356,6 +492,7 @@ public class SideBySideDialog extends DialogFragment {
         selectImageDialog = new SelectImageDialog(tagId, item -> {
             if (selectImageDialog != null)
                 selectImageDialog.dismiss();
+            imgLeftRotate = 0f;
             itemLeft = item;
             time1 = Utils.getTimeFromLong(itemLeft.createAt);
             createBitmap();
@@ -531,5 +668,33 @@ public class SideBySideDialog extends DialogFragment {
             return 270;
         }
         return 0;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP) {
+            final Uri resultUri = UCrop.getOutput(data);
+            if (getActivity() == null)
+                return;
+            new FileManager(getActivity()).sendBroadcastScanFile(new File(resultUri.getPath()));
+            tempFile.delete();
+
+            SweetAlertDialog pDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.SUCCESS_TYPE);
+//            pDialog.getProgressHelper().setBarColor(getResources().getColor(R.color.blue));
+//            pDialog.setTitleText(getString(R.string.loading));
+//            pDialog.setCancelable(false);
+//            pDialog.show();
+
+            pDialog.setTitleText(getString(R.string.saved))
+                    .setContentText(getString(R.string.image_saved))
+                    .setConfirmText(getString(R.string.str_ok))
+                    .setConfirmClickListener(null)
+                    .show();
+
+        } else if (resultCode == UCrop.RESULT_ERROR) {
+            final Throwable cropError = UCrop.getError(data);
+        }
+
     }
 }

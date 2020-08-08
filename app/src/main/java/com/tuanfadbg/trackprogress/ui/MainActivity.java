@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -22,7 +23,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.android.dx.command.Main;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.tuanfadbg.trackprogress.beforeafterimage.BuildConfig;
@@ -42,6 +42,8 @@ import com.tuanfadbg.trackprogress.ui.main_list.TimelineListAdapter;
 import com.tuanfadbg.trackprogress.ui.rate.RateDialog;
 import com.tuanfadbg.trackprogress.ui.settings.SettingsDialog;
 import com.tuanfadbg.trackprogress.ui.side_by_side.SideBySideDialog;
+import com.tuanfadbg.trackprogress.utils.FileManager;
+import com.tuanfadbg.trackprogress.utils.Logger;
 import com.tuanfadbg.trackprogress.utils.SharePreferentUtils;
 import com.tuanfadbg.trackprogress.utils.Utils;
 import com.tuanfadbg.trackprogress.utils.takephoto.TakePhotoCallback;
@@ -77,6 +79,18 @@ public class MainActivity extends AppCompatActivity {
     BroadcastReceiver brName;
     BroadcastReceiver brTag;
     BroadcastReceiver brItem;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Logger.e("resume");
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                FileManager.removeOldImage();
+            }
+        });
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

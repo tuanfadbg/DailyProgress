@@ -91,40 +91,6 @@ public class CheckPasscodeActivity extends AppCompatActivity {
                 }
             }
         }, 2300);
-
-//        ItemSelectAsyncTask itemSelectAsyncTask
-//                = new ItemSelectAsyncTask(this);
-//        itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, -1, datas -> {
-//            long lastDate = new Date().getTime();
-//            for (int i = 0; i < datas.size(); i++) {
-//                int ran = 0;
-//                while (ran < 5) {
-//                    ran = new Random().nextInt(14);
-//                }
-//                datas.get(i).createAt = lastDate - ran * 60*60*24*1000;
-//                lastDate = datas.get(i).createAt;
-//                ItemUpdateAsyncTask itemUpdateAsyncTask = new ItemUpdateAsyncTask(this);
-//                itemUpdateAsyncTask.execute(new Data(datas.get(i), new OnUpdateDatabase() {
-//                    @Override
-//                    public void onSuccess() {
-//
-//                    }
-//
-//                    @Override
-//                    public void onFail() {
-//
-//                    }
-//                }));
-//            }
-//        }));
-
-//        ItemSelectAsyncTask tagSelectAsyncTask = new ItemSelectAsyncTask(this);
-//        tagSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, -1, new ItemSelectAsyncTask.OnItemSelectedListener() {
-//            @Override
-//            public void onSelected(List<Item> datas) {
-//
-//            }
-//        }));
     }
 
     private void showCheckPasscode() {

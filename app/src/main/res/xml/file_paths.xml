@@ -7,6 +7,9 @@
     <external-path
         name="external_storage_root"
         path="." />
+    <external-files-path
+        name="app_data"
+        path="." />
     <files-path
         name="private"
         path="."/>
