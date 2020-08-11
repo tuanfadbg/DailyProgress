@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+
+    <ImageView
+        android:id="@+id/img_rotate_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:rotation="-60"
+        android:src="@drawable/ic_rotate_left"
+        android:tint="@android:color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/img_rotate_right"
+        app:layout_constraintEnd_toStartOf="@+id/img_rotate_right"
+        app:layout_constraintTop_toTopOf="@+id/img_rotate_right"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <ImageView
+        android:id="@+id/img_rotate_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:rotation="60"
+        android:src="@drawable/ic_rotate_right"
+        android:tint="@android:color/black"
+        app:layout_constraintBottom_toBottomOf="@+id/txt_crop"
+        app:layout_constraintEnd_toStartOf="@+id/txt_crop"
+        app:layout_constraintTop_toTopOf="@+id/txt_crop"
+        />
+
+    <com.isseiaoki.simplecropview.CropImageView
+        android:id="@+id/crop_image_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="16dp"
+        app:layout_constraintBottom_toTopOf="@id/rcv_ratio"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/img_back"
+        app:layout_constraintVertical_bias="0.531"
+        app:scv_background_color="#f2f2f2"
+        app:scv_crop_mode="fit_image"
+        app:scv_frame_color="@color/blue"
+        app:scv_frame_stroke_weight="1dp"
+        app:scv_guide_color="@color/blue"
+        app:scv_guide_show_mode="show_always"
+        app:scv_guide_stroke_weight="1dp"
+        app:scv_handle_color="@color/blue"
+        app:scv_handle_show_mode="show_always"
+        app:scv_handle_size="8dp"
+        app:scv_min_frame_size="50dp"
+        app:scv_overlay_color="#52000000"
+        app:scv_touch_padding="16dp" />
+
+    <TextView
+        android:id="@+id/txt_crop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:fontFamily="@font/lato_bold"
+        android:padding="16dp"
+        android:text="@string/crop"
+        android:textColor="@android:color/black"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@+id/img_back"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/img_back" />
+
+    <ImageView
+        android:id="@+id/img_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:src="@drawable/ic_back"
+        android:tint="@android:color/black"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rcv_ratio"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#f2f2f2"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

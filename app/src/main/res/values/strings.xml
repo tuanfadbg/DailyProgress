@@ -85,5 +85,8 @@
     <string name="rate">Rate</string>
     <string name="please_give_5_star">Please give me a 5-star rating</string>
     <string name="thanks_for_your_feed_back">Thanks for your feedback</string>
+    <string name="your_image">Your Image</string>
+    <string name="crop">Crop</string>
+    <string name="share">Share</string>
 
 </resources>

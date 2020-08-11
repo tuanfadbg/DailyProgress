@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
+    android:background="@color/gray_dimmer">
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout"
+        android:layout_width="0dp"
+        android:layout_height="500dp"
+        android:layout_margin="32dp"
+        android:background="@drawable/bg_white_dimmer_radius_20"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+        <TextView
+            android:id="@+id/txt_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="@font/lato_bold"
+            android:gravity="center"
+            android:paddingStart="26dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="26dp"
+            android:paddingBottom="8dp"
+            android:text="@string/save"
+            android:textColor="@color/blur_dark_state"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/txt_crop"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintHorizontal_chainStyle="spread"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/txt_crop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="@font/lato_bold"
+            android:gravity="center"
+            android:paddingStart="26dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="26dp"
+            android:paddingBottom="8dp"
+            android:text="@string/crop"
+            android:textColor="@color/blur_dark_state"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/txt_delete"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/txt_save" />
+
+        <TextView
+            android:id="@+id/txt_delete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="@font/lato_regular"
+            android:paddingStart="26dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="26dp"
+            android:paddingBottom="8dp"
+            android:text="@string/cancel"
+            android:textColor="@color/blur_dark_state"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/txt_crop"
+            app:layout_constraintTop_toTopOf="@+id/txt_crop" />
+
+        <TextView
+            android:id="@+id/textView21"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/lato_bold"
+            android:text="@string/your_image"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.498"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.isseiaoki.simplecropview.CropImageView
+            android:id="@+id/crop_image_view"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="16dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/txt_crop"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView21"
+            app:scv_background_color="#f2f2f2"
+            app:scv_crop_mode="fit_image"
+            app:scv_frame_color="@color/blue"
+            app:scv_frame_stroke_weight="1dp"
+            app:scv_guide_color="@color/blue"
+            app:scv_guide_show_mode="show_always"
+            app:scv_guide_stroke_weight="1dp"
+            app:scv_handle_color="@color/blue"
+            app:scv_handle_show_mode="show_always"
+            app:scv_handle_size="8dp"
+            app:scv_min_frame_size="50dp"
+            app:scv_overlay_color="#52000000"
+            app:scv_touch_padding="8dp" />
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="16dp"
+            app:layout_constraintBottom_toTopOf="@+id/txt_crop"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView21" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

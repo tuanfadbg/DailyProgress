@@ -10,8 +10,8 @@ android {
         applicationId "com.tuanfadbg.trackprogress.beforeafterimage"
         minSdkVersion 16
         targetSdkVersion 29
-        versionCode 9
-        versionName "1.0.9.13.11"
+        versionCode 11
+        versionName "1.1.1.13.11"
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -52,15 +52,15 @@ dependencies {
 
     implementation 'com.google.android.gms:play-services-auth:18.0.0'
     implementation files('libs/activation.jar')
-    implementation files('libs/additionnal.jar')
-    implementation files('libs/mail.jar')
-
+//    implementation files('libs/additionnal.jar')
+//    implementation files('libs/mail.jar')
+//    implementation 'com.sun.activation:javax.activation:1.2.0'
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
     implementation 'io.reactivex.rxjava3:rxjava:3.0.0'
 
     implementation 'ja.burhanrashid52:photoeditor:0.4.0'
     implementation 'com.github.duanhong169:colorpicker:1.1.6'
-    implementation 'com.github.yalantis:ucrop:2.2.5-native'
+//    implementation 'com.github.yalantis:ucrop:2.2.5-native'
     implementation 'com.android.billingclient:billing:2.2.0'
     implementation 'com.android.volley:volley:1.1.1'
 
@@ -72,4 +72,5 @@ dependencies {
 
     implementation 'androidx.biometric:biometric:1.0.1'
     implementation 'me.zhanghai.android.materialratingbar:library:1.4.0'
+    implementation 'com.isseiaoki:simplecropview:1.1.8'
 }

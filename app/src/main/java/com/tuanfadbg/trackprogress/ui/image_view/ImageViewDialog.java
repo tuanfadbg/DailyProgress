@@ -27,25 +27,19 @@ import com.tuanfadbg.trackprogress.database.item.Item;
 import com.tuanfadbg.trackprogress.database.item.ItemDeteleAsyncTask;
 import com.tuanfadbg.trackprogress.database.item.ItemUpdateAsyncTask;
 import com.tuanfadbg.trackprogress.ui.MainActivity;
+import com.tuanfadbg.trackprogress.ui.crop_image.CropImageDialog;
 import com.tuanfadbg.trackprogress.ui.draw_image.DrawImageActivity;
 import com.tuanfadbg.trackprogress.ui.image_note.ImageNoteDialog;
 import com.tuanfadbg.trackprogress.ui.side_by_side.SideBySideDialog;
 import com.tuanfadbg.trackprogress.utils.FileManager;
 import com.tuanfadbg.trackprogress.utils.RotateTransformation;
 import com.tuanfadbg.trackprogress.utils.SharePreferentUtils;
-import com.yalantis.ucrop.UCrop;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Date;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
-
-import static android.app.Activity.RESULT_OK;
 
 public class ImageViewDialog extends DialogFragment {
 
@@ -82,6 +76,7 @@ public class ImageViewDialog extends DialogFragment {
     }
 
     long timeView = new Date().getTime();
+
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -160,39 +155,44 @@ public class ImageViewDialog extends DialogFragment {
         imageNoteDialog.show(getFragmentManager(), ImageNoteDialog.class.getSimpleName());
     }
 
-    private File tempFile;
-
     private void crop() {
-        tempFile = new FileManager(getActivity()).getNewFileInPrivateStorage();
-        UCrop.of(Uri.fromFile(new File(item.file)), Uri.fromFile(tempFile))
+        File tempFile = new FileManager(getActivity()).getNewFileInPrivateStorage();
+        CropImageDialog.show(getFragmentManager(), new File(item.file), tempFile, new CropImageDialog.OnCropListener() {
+            @Override
+            public void onCrop(File dest) {
+                File previousFile = new File(item.file);
+                if (previousFile.delete()) {
+                    Glide.with(imageView).load(dest).signature(new ObjectKey(new Date().getTime())).into(imageView);
+                    item.file = dest.getAbsolutePath();
+                    ItemUpdateAsyncTask itemUpdateAsyncTask = new ItemUpdateAsyncTask(getContext());
+                    itemUpdateAsyncTask.execute(new Data(item, new OnUpdateDatabase() {
+                        @Override
+                        public void onSuccess() {
 
-//                .withAspectRatio(16, 9)
-//                .withMaxResultSize(maxWidth, maxHeight)
-                .start(getContext(), this);
+                        }
+
+                        @Override
+                        public void onFail() {
+
+                        }
+                    }));
+                } else {
+                    SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.ERROR_TYPE);
+                    sweetAlertDialog.setTitle(R.string.unknown_error);
+                    sweetAlertDialog.show();
+                }
+            }
+
+            @Override
+            public void cancel() {
+                tempFile.delete();
+            }
+        });
     }
 
     private void compare() {
         SideBySideDialog sideBySideDialog = new SideBySideDialog(item);
         sideBySideDialog.show(getActivity().getSupportFragmentManager(), SideBySideDialog.class.getSimpleName());
-    }
-
-    private void copyFileUsingStream(File source, File dest) throws IOException {
-        InputStream is = null;
-        OutputStream os = null;
-        try {
-            is = new FileInputStream(source);
-            os = new FileOutputStream(dest);
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = is.read(buffer)) > 0) {
-                os.write(buffer, 0, length);
-            }
-        } catch (Exception e) {
-            if (is != null)
-                is.close();
-            if (os != null)
-                os.close();
-        }
     }
 
     private void share() {
@@ -204,7 +204,6 @@ public class ImageViewDialog extends DialogFragment {
 
             FileManager fileManager = new FileManager(getActivity());
             File src = new File(item.file);
-            fileManager.createFolder();
             File dest = fileManager.getOutputMediaFile();
             SharePreferentUtils.insertImagePathHaveToRemove(dest.getAbsolutePath());
 
@@ -212,7 +211,7 @@ public class ImageViewDialog extends DialogFragment {
                 @Override
                 public void run() {
                     try {
-                        copyFileUsingStream(src, dest);
+                        fileManager.copyFileUsingStream(src, dest);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -262,41 +261,6 @@ public class ImageViewDialog extends DialogFragment {
                     dismiss();
                 })
                 .show();
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP) {
-            final Uri resultUri = UCrop.getOutput(data);
-            File previousFile = new File(item.file);
-            if (previousFile.delete()) {
-                Glide.with(imageView).load(resultUri).signature(new ObjectKey(new Date().getTime())).into(imageView);
-                item.file = tempFile.getAbsolutePath();
-                ItemUpdateAsyncTask itemUpdateAsyncTask = new ItemUpdateAsyncTask(getContext());
-                itemUpdateAsyncTask.execute(new Data(item, new OnUpdateDatabase() {
-                    @Override
-                    public void onSuccess() {
-
-                    }
-
-                    @Override
-                    public void onFail() {
-
-                    }
-                }));
-            } else {
-                SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.ERROR_TYPE);
-                sweetAlertDialog.setTitle(R.string.unknown_error);
-                sweetAlertDialog.show();
-            }
-        } else if (resultCode == UCrop.RESULT_ERROR) {
-            final Throwable cropError = UCrop.getError(data);
-        } else if (requestCode == DrawImageActivity.REQUEST_CODE) {
-            if (getActivity() != null) {
-                Glide.with(imageView).load(new File(item.file)).signature(new ObjectKey(new Date().getTime())).into(imageView);
-            }
-        }
     }
 
     public void setItem(Item item) {
