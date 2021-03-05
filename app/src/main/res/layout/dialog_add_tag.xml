@@ -47,7 +47,7 @@
             android:layout_height="wrap_content"
             android:fontFamily="@font/lato_regular"
             android:padding="10dp"
-            android:text="@string/cancel"
+            android:text="@string/str_cancel"
             android:textColor="@color/blue_dark"
             app:layout_constraintBottom_toBottomOf="@+id/txt_save"
             app:layout_constraintEnd_toEndOf="@+id/constraintLayout"

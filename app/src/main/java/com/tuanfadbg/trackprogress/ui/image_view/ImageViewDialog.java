@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -38,6 +39,7 @@ import com.tuanfadbg.trackprogress.utils.SharePreferentUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Locale;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
@@ -47,7 +49,9 @@ public class ImageViewDialog extends DialogFragment {
     private static final int WRITE_EXTERNAL_REQUEST_CODE = 1222;
     private TouchImageView imageView;
     private Item item;
-    private ConstraintLayout ctBottom;
+    private ConstraintLayout ctBottom, ctRotateControl, ctGrid;
+    private TextView txtRotateValue, txtRotateCancel, txtRotateDone;
+    private SeekBar seekBarRotate;
     private OnItemDeletedListener onItemDeletedListener;
     private TextView txtTitle;
 
@@ -86,6 +90,14 @@ public class ImageViewDialog extends DialogFragment {
         ctBottom = view.findViewById(R.id.ct_bottom);
         txtTitle = view.findViewById(R.id.txt_title);
 
+        ctRotateControl = view.findViewById(R.id.ct_rotate_control);
+        ctGrid = view.findViewById(R.id.ct_grid);
+
+        txtRotateValue = view.findViewById(R.id.txt_rotate_value);
+        txtRotateCancel = view.findViewById(R.id.txt_rotate_cancel);
+        txtRotateDone = view.findViewById(R.id.txt_rotate_done);
+        seekBarRotate = view.findViewById(R.id.seekbar_rotate);
+
         if (item == null)
             return;
         txtTitle.setText((TextUtils.isEmpty(item.title) ? "" : item.title));
@@ -94,15 +106,21 @@ public class ImageViewDialog extends DialogFragment {
                 .signature(new ObjectKey(timeView))
                 .into(imageView);
 
+
+        setListener(view);
+    }
+
+    private void setListener(View view) {
         imageView.setOnClickListener(v -> {
+            if (ctRotateControl.getVisibility() == View.VISIBLE)
+                return;
             if (ctBottom.getVisibility() == View.VISIBLE)
                 ctBottom.setVisibility(View.GONE);
             else
                 ctBottom.setVisibility(View.VISIBLE);
         });
 
-        view.findViewById(R.id.img_rotate_left).setOnClickListener(v -> rotateLeft());
-        view.findViewById(R.id.img_rotate_right).setOnClickListener(v -> rotateRight());
+        view.findViewById(R.id.img_rotate).setOnClickListener(v -> rotate());
         view.findViewById(R.id.img_compare).setOnClickListener(v -> compare());
         view.findViewById(R.id.img_back).setOnClickListener(v -> dismiss());
         view.findViewById(R.id.img_comment).setOnClickListener(v -> edit());
@@ -112,6 +130,48 @@ public class ImageViewDialog extends DialogFragment {
         view.findViewById(R.id.img_delete).setOnClickListener(v -> delete());
         if (!TextUtils.isEmpty(item.title))
             txtTitle.setOnClickListener(v -> viewMoreTitle());
+
+
+        ctRotateControl.setOnClickListener(v -> {
+        });
+
+        txtRotateDone.setOnClickListener(v -> {
+            resetRotateControl();
+        });
+
+        txtRotateCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ctGrid.getVisibility() == View.VISIBLE) {
+                    rotateAngle = previousRotationIfCancel;
+                    resetRotateControl();
+                    imageView.setRotation(0f);
+                    reloadImage();
+                }
+
+            }
+        });
+    }
+
+    private void resetRotateControl() {
+        ctGrid.setVisibility(View.GONE);
+        ctRotateControl.setVisibility(View.GONE);
+        seekBarRotate.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
     }
 
     private void viewMoreTitle() {
@@ -120,22 +180,43 @@ public class ImageViewDialog extends DialogFragment {
         else txtTitle.setMaxLines(2);
     }
 
-    private float rotateAngle = 0f;
+    private float rotateAngle, previousRotationIfCancel, previousRotation = 0f;
 
-    private void rotateLeft() {
-        rotateAngle = (rotateAngle - 90f) % 360f;
-        Glide.with(getContext())
-                .load(new File(item.file))
-                .signature(new ObjectKey(timeView))
-                .transform(new RotateTransformation(getContext(), rotateAngle))
-                .into(imageView);
+    private void rotate() {
+        ctRotateControl.setVisibility(View.VISIBLE);
+        ctGrid.setVisibility(View.VISIBLE);
+        ctBottom.setVisibility(View.GONE);
+        seekBarRotate.setProgress((int) rotateAngle + 180);
+        previousRotation = seekBarRotate.getProgress();
+        previousRotationIfCancel = seekBarRotate.getProgress() - 180;
+        txtRotateValue.setText(String.format(Locale.US, "%d°", (int) rotateAngle));
+        seekBarRotate.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                rotateAngle = progress - 180f;
+                txtRotateValue.setText(String.format(Locale.US, "%d°", (int) rotateAngle));
+                imageView.setRotation(progress - previousRotation);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                imageView.setRotation(0f);
+                previousRotation = seekBarRotate.getProgress();
+                reloadImage();
+            }
+        });
+
     }
 
-    private void rotateRight() {
-        rotateAngle = (rotateAngle + 90f) % 360f;
-        Glide.with(getContext())
+    private void reloadImage() {
+        Glide.with(imageView)
                 .load(new File(item.file))
-                .signature(new ObjectKey(timeView))
+                .signature(new ObjectKey(new Date().getTime()))
                 .transform(new RotateTransformation(getContext(), rotateAngle))
                 .into(imageView);
     }

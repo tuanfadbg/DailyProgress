@@ -1,11 +1,13 @@
 package com.tuanfadbg.trackprogress.ui.settings;
 
 import android.app.Dialog;
-import android.graphics.Bitmap;
-import android.net.Uri;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +15,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.DialogFragment;
 
@@ -33,21 +36,19 @@ import com.tuanfadbg.trackprogress.database.item.Item;
 import com.tuanfadbg.trackprogress.database.item.ItemSelectAsyncTask;
 import com.tuanfadbg.trackprogress.ui.MainActivity;
 import com.tuanfadbg.trackprogress.ui.edit_name.EditNameDialog;
-import com.tuanfadbg.trackprogress.ui.image_note.ImageNoteDialog;
 import com.tuanfadbg.trackprogress.ui.passcode.CreatePasscodeDialog;
 import com.tuanfadbg.trackprogress.ui.restore.RestoreDialog;
 import com.tuanfadbg.trackprogress.ui.tag_manager.TagManagerDialog;
 import com.tuanfadbg.trackprogress.utils.FileManager;
 import com.tuanfadbg.trackprogress.utils.SharePreferentUtils;
 import com.tuanfadbg.trackprogress.utils.Utils;
-import com.tuanfadbg.trackprogress.utils.takephoto.TakePhotoCallback;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
@@ -57,7 +58,7 @@ public class SettingsDialog extends DialogFragment {
     private TextView txtName;
     private ConstraintLayout ctPasscode, ctPasscodeSetting, ctExport;
     private Switch switchPassword;
-    private TextView txtLocation;
+    private TextView txtLocation, txtLanguage;
     private String FOLDER = String.format("Storage/%s/%s", Utils.FOLDER, Utils.EXPORT_FOLDER);
 
     @Override
@@ -80,48 +81,66 @@ public class SettingsDialog extends DialogFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        View view = inflater.inflate(R.layout.dialog_settings, container, false);
+        view = (ViewGroup) inflater.inflate(R.layout.dialog_settings, container, false);
         return view;
     }
 
-    View view;
+
+    ViewGroup view;
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        this.view = view;
+
+        defineView(view);
+        setLayout(null);
+        getPrice();
+    }
+
+    private void defineView(View view) {
         txtName = view.findViewById(R.id.txt_name);
         ctPasscode = view.findViewById(R.id.ct_password);
         ctPasscodeSetting = view.findViewById(R.id.ct_password_settings);
         ctExport = view.findViewById(R.id.ct_export);
         switchPassword = view.findViewById(R.id.switch_passcode);
+        txtLanguage = view.findViewById(R.id.txt_language);
         txtLocation = view.findViewById(R.id.txt_location);
-
-        String name = SharePreferentUtils.getName(false);
-        if (TextUtils.isEmpty(name))
-            name = getString(R.string.enter_your_name);
-        txtName.setText(name);
-
-        setLayout();
-        setListener(view);
-        getPrice();
     }
 
-    private void setLayout() {
-        boolean isPremium = SharePreferentUtils.isPremium();
 
-        switchPassword.setChecked(isPremium && SharePreferentUtils.isPasscodeEnable());
-        ctPasscode.setSelected(!isPremium);
-        ctPasscodeSetting.setSelected(!isPremium);
-        ctExport.setSelected(!isPremium);
-        switchPassword.setClickable(isPremium);
+    private void setLayout(Locale locale) {
+        try {
+            String name = SharePreferentUtils.getName(false);
+            if (TextUtils.isEmpty(name))
+                name = getString(R.string.enter_your_name);
+            txtName.setText(name);
 
-        if (isPremium) {
-            view.findViewById(R.id.ct_premium).setVisibility(View.GONE);
-            view.findViewById(R.id.txt_upgrade).setVisibility(View.GONE);
+            boolean isPremium = SharePreferentUtils.isPremium();
+
+            switchPassword.setChecked(isPremium && SharePreferentUtils.isPasscodeEnable());
+            ctPasscode.setSelected(!isPremium);
+            ctPasscodeSetting.setSelected(!isPremium);
+            if (locale == null) {
+                locale = getResources().getConfiguration().locale;
+            }
+//            Log.e(TAG, "setLayout: " + locale.getLanguage() );
+            txtLanguage.setText(Utils.uppercaseFirstLetter(locale.getDisplayLanguage(locale)));
+
+            ctExport.setSelected(!isPremium);
+            switchPassword.setClickable(isPremium);
+
+            if (isPremium) {
+                view.findViewById(R.id.ct_premium).setVisibility(View.GONE);
+                view.findViewById(R.id.txt_upgrade).setVisibility(View.GONE);
+            }
+
+            txtLocation.setText(FOLDER);
+
+            setListener(view);
+        } catch (Exception ignored) {
+
         }
 
-        txtLocation.setText(FOLDER);
     }
 
     private void setListener(View view) {
@@ -131,7 +150,7 @@ public class SettingsDialog extends DialogFragment {
         txtName.setOnClickListener(v -> {
             EditNameDialog editNameDialog = new EditNameDialog(newName -> {
                 txtName.setText(newName);
-                ((MainActivity) getActivity()).updateName(newName);
+//                ((MainActivity) getActivity()).updateName(newName);
             });
             editNameDialog.show(getFragmentManager(), EditNameDialog.class.getSimpleName());
         });
@@ -148,6 +167,7 @@ public class SettingsDialog extends DialogFragment {
             }
         });
         ctPasscodeSetting.setOnClickListener(v -> showPassCodeSettings(false));
+        view.findViewById(R.id.ct_language).setOnClickListener(v -> showDialogSelectLanguages());
         view.findViewById(R.id.ct_tag_manager).setOnClickListener(v -> showTagManager());
         view.findViewById(R.id.txt_upgrade).setOnClickListener(v -> upgradePremium());
         ctExport.setOnClickListener(v -> exportAll());
@@ -155,6 +175,7 @@ public class SettingsDialog extends DialogFragment {
     }
 
     private BillingClient billingClient;
+
     SkuDetails productSku;
 
     private void getPrice() {
@@ -254,6 +275,95 @@ public class SettingsDialog extends DialogFragment {
         }
     }
 
+    AlertDialog alertDialogLanguages;
+    CharSequence[] valuesLanguages;
+
+    private void showDialogSelectLanguages() {
+        ArrayList<String> listLanguageCodeDefault = new ArrayList<>();
+        listLanguageCodeDefault.add("en");
+        listLanguageCodeDefault.add("pt");
+        listLanguageCodeDefault.add("ar");
+        listLanguageCodeDefault.add("ru");
+        listLanguageCodeDefault.add("ja");
+        listLanguageCodeDefault.add("vi");
+
+        Locale currentLocate = getResources().getConfiguration().locale;
+
+        boolean isContainLanguage = false;
+        int checkedItem = 0;
+        for (int i = 0; i < listLanguageCodeDefault.size(); i++) {
+            if (currentLocate.getLanguage().contains(listLanguageCodeDefault.get(i))) {
+                isContainLanguage = true;
+                checkedItem = i;
+                break;
+            }
+        }
+        if (!isContainLanguage) {
+            listLanguageCodeDefault.add(0, currentLocate.getLanguage());
+        }
+        for (int i = 0; i < listLanguageCodeDefault.size(); i++) {
+            if (!isSupportLanguage(listLanguageCodeDefault.get(i))) {
+                listLanguageCodeDefault.remove(i);
+                i--;
+            }
+        }
+
+        valuesLanguages = new CharSequence[listLanguageCodeDefault.size()];
+        for (int i = 0; i < listLanguageCodeDefault.size(); i++) {
+            Locale loc = new Locale(listLanguageCodeDefault.get(i));
+            String name = loc.getDisplayName(loc);
+            name = Utils.uppercaseFirstLetter(name);
+            valuesLanguages[i] = name;
+        }
+
+        final int[] userSelectedItem = {checkedItem};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle(R.string.language);
+        builder.setSingleChoiceItems(valuesLanguages, checkedItem, (dialog, item) -> userSelectedItem[0] = item);
+        builder.setPositiveButton(R.string.str_ok, (dialog, which) -> {
+            if (getActivity() != null)
+                setLocaleAndRecreateView(listLanguageCodeDefault.get(userSelectedItem[0]));
+        });
+
+        builder.setNegativeButton(R.string.str_cancel, (dialog, which) -> {
+
+        });
+
+        alertDialogLanguages = builder.create();
+        alertDialogLanguages.show();
+    }
+
+    private boolean isSupportLanguage(String languageCode) {
+        List<String> supportedLanguages = Arrays.asList(Resources.getSystem().getAssets().getLocales());
+        return supportedLanguages.contains(languageCode);
+    }
+
+    public void setLocaleAndRecreateView(String languageCode) {
+        Locale localeDefault = getResources().getConfiguration().locale;
+        if (localeDefault.getLanguage().equals(languageCode))
+            return;
+
+        if (getActivity() != null) {
+            Locale locale = new Locale(languageCode);
+            Locale.setDefault(locale);
+            Resources resources = getActivity().getResources();
+            Configuration config = resources.getConfiguration();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                config.setLocale(locale);
+            }
+            resources.updateConfiguration(config, resources.getDisplayMetrics());
+            recreateView(locale);
+        }
+    }
+
+    private void recreateView(Locale locale) {
+        view.removeAllViews();
+        getLayoutInflater().inflate(R.layout.dialog_settings, view);
+        defineView(view);
+        setLayout(locale);
+    }
+
     private void exportAll() {
         if (SharePreferentUtils.isPremium()) {
             ItemSelectAsyncTask itemSelectAsyncTask = new ItemSelectAsyncTask(getContext());
@@ -320,6 +430,7 @@ public class SettingsDialog extends DialogFragment {
         }
     };
 
+
     private void handlePurchase(Purchase purchase) {
         if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
             // Grant entitlement to the user.
@@ -350,7 +461,7 @@ public class SettingsDialog extends DialogFragment {
 
     private void grantEtitlement() {
         SharePreferentUtils.setPremium(true);
-        setLayout();
+        setLayout(null);
     }
 
     private void restore() {

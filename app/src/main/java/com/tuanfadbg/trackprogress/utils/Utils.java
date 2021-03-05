@@ -128,4 +128,10 @@ public class Utils {
         gradientDrawable.setCornerRadius(100f);
         return gradientDrawable;
     }
+
+    public static String uppercaseFirstLetter(String name) {
+        if (name == null || name.equals(""))
+            return "";
+        return name.substring(0, 1).toUpperCase() + name.substring(1);
+    }
 }

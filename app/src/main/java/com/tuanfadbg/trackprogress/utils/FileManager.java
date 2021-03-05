@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 
+import com.android.dex.util.FileUtils;
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
 
 import java.io.File;
@@ -24,6 +25,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;

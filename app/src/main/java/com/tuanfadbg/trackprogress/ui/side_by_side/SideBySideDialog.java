@@ -21,8 +21,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
@@ -47,6 +49,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
@@ -67,10 +70,14 @@ public class SideBySideDialog extends DialogFragment {
     private int style;
     private Bitmap resultbitmap;
     private ProgressBar progressBar;
+    private ConstraintLayout ctRotateControl, ctGridLeft, ctGridRight;
+    private TextView txtRotateValue, txtRotateCancel, txtRotateDone;
+    private SeekBar seekBarRotate;
+
     private int tagId;
     private Item itemLeft;
     private Item itemRight;
-    private int viewType = VIEW_TYPE_COMBINE_ONE;
+    private int viewType = VIEW_TYPE_ZOOM_EACH_IMAGE;
 
     private float imgLeftRotate = 0f;
     private float imgRightRotate = 0f;
@@ -131,9 +138,17 @@ public class SideBySideDialog extends DialogFragment {
         imgSettings = view.findViewById(R.id.img_settings);
         progressBar = view.findViewById(R.id.progressBar);
 
+        ctRotateControl = view.findViewById(R.id.ct_rotate_control);
+        ctGridLeft = view.findViewById(R.id.ct_grid_left);
+        ctGridRight = view.findViewById(R.id.ct_grid_right);
+
+        txtRotateValue = view.findViewById(R.id.txt_rotate_value);
+        txtRotateCancel = view.findViewById(R.id.txt_rotate_cancel);
+        txtRotateDone = view.findViewById(R.id.txt_rotate_done);
+        seekBarRotate = view.findViewById(R.id.seekbar_rotate);
+
         if (items != null) {
             itemLeft = items.get(items.size() - 1);
-            ;
             itemRight = items.get(0);
             tagId = itemLeft.tag;
             initData();
@@ -189,9 +204,9 @@ public class SideBySideDialog extends DialogFragment {
             imageView.setVisibility(View.GONE);
             imageView1.setVisibility(View.VISIBLE);
             imageView2.setVisibility(View.VISIBLE);
-//
-//            txtRotateLeft.setVisibility(View.VISIBLE);
-//            txtRotateRight.setVisibility(View.VISIBLE);
+
+            txtRotateLeft.setVisibility(View.VISIBLE);
+            txtRotateRight.setVisibility(View.VISIBLE);
         } else if (viewType == VIEW_TYPE_COMBINE_ONE) {
             imgSettings.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_combine_one_image));
             Glide.with(imageView).load(resultbitmap).signature(new ObjectKey(new Date().getTime())).into(imageView);
@@ -199,9 +214,8 @@ public class SideBySideDialog extends DialogFragment {
             imageView.setVisibility(View.VISIBLE);
             imageView1.setVisibility(View.GONE);
             imageView2.setVisibility(View.GONE);
-//
-//            txtRotateLeft.setVisibility(View.GONE);
-//            txtRotateRight.setVisibility(View.GONE);
+            txtRotateLeft.setVisibility(View.GONE);
+            txtRotateRight.setVisibility(View.GONE);
         }
     }
 
@@ -224,33 +238,149 @@ public class SideBySideDialog extends DialogFragment {
         view.findViewById(R.id.ic_share).setOnClickListener(v -> saveOrShare(false));
         view.findViewById(R.id.ic_save).setOnClickListener(v -> saveOrShare(true));
         view.findViewById(R.id.img_settings).setOnClickListener(v -> setting());
-        view.findViewById(R.id.img_select_right).setOnClickListener(v -> selectImageRight());
-//        view.findViewById(R.id.img_right).setOnClickListener(v -> selectImageRight());
 
+        view.findViewById(R.id.img_select_right).setOnClickListener(v -> selectImageRight());
         view.findViewById(R.id.img_select_left).setOnClickListener(v -> selectImageLeft());
-//        view.findViewById(R.id.img_left).setOnClickListener(v -> selectImageLeft());
 
         txtRotateLeft.setOnClickListener(v -> rotateImageOnTheLeft());
         txtRotateRight.setOnClickListener(v -> rotateImageOnTheRight());
 
+        ctRotateControl.setOnClickListener(v -> {
+        });
+
+        txtRotateDone.setOnClickListener(v -> {
+            resetRotateControl();
+        });
+
+        txtRotateCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ctGridLeft.getVisibility() == View.VISIBLE) {
+                    imgLeftRotate = previousLeftRotationIfCancel;
+                    resetRotateControl();
+                    imageView1.setRotation(0f);
+                    if (viewType == VIEW_TYPE_ZOOM_EACH_IMAGE) {
+                        reloadImageLeft();
+                    } else {
+                        createBitmap();
+                    }
+                } else {
+                    imgRightRotate = previousRightRotationIfCancel;
+                    resetRotateControl();
+                    imageView2.setRotation(0f);
+                    if (viewType == VIEW_TYPE_ZOOM_EACH_IMAGE) {
+                        reloadImageRight();
+                    } else {
+                        createBitmap();
+                    }
+                }
+
+            }
+        });
     }
+
+    private void resetRotateControl() {
+        imgSettings.setVisibility(View.VISIBLE);
+        ctGridLeft.setVisibility(View.GONE);
+        ctGridRight.setVisibility(View.GONE);
+        txtRotateLeft.setVisibility(View.VISIBLE);
+        txtRotateRight.setVisibility(View.VISIBLE);
+        ctRotateControl.setVisibility(View.GONE);
+        seekBarRotate.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+    }
+
+    float previousLeftRotation;
+    float previousLeftRotationIfCancel;
 
     private void rotateImageOnTheLeft() {
-        imgLeftRotate = (imgLeftRotate + 90f) % 360f;
-        if (viewType == VIEW_TYPE_ZOOM_EACH_IMAGE) {
-            reloadImageLeft();
-        } else {
-            createBitmap();
-        }
+        ctGridLeft.setVisibility(View.VISIBLE);
+        setLayoutRotate();
+        seekBarRotate.setProgress((int) imgLeftRotate + 180);
+        previousLeftRotation = seekBarRotate.getProgress();
+        previousLeftRotationIfCancel = seekBarRotate.getProgress() - 180;
+        txtRotateValue.setText(String.format(Locale.US, "%d°", (int) imgLeftRotate));
+        seekBarRotate.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                imgLeftRotate = progress - 180f;
+                txtRotateValue.setText(String.format(Locale.US, "%d°", (int) imgLeftRotate));
+                imageView1.setRotation(progress - previousLeftRotation);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                imageView1.setRotation(0f);
+                previousLeftRotation = seekBarRotate.getProgress();
+                if (viewType == VIEW_TYPE_ZOOM_EACH_IMAGE) {
+                    reloadImageLeft();
+                } else {
+                    createBitmap();
+                }
+            }
+        });
     }
 
+    float previousRightRotation;
+
+    float previousRightRotationIfCancel;
     private void rotateImageOnTheRight() {
-        imgRightRotate = (imgRightRotate + 90f) % 360f;
-        if (viewType == VIEW_TYPE_ZOOM_EACH_IMAGE) {
-            reloadImageRight();
-        } else {
-            createBitmap();
-        }
+        ctGridRight.setVisibility(View.VISIBLE);
+        setLayoutRotate();
+        seekBarRotate.setProgress((int) imgRightRotate + 180);
+        previousRightRotation = seekBarRotate.getProgress();
+        previousRightRotationIfCancel = seekBarRotate.getProgress() - 180;
+        txtRotateValue.setText(String.format(Locale.US, "%d°", (int) imgRightRotate));
+        seekBarRotate.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                imgRightRotate = progress - 180f;
+                txtRotateValue.setText(String.format(Locale.US, "%d°", (int) imgRightRotate));
+                imageView2.setRotation(progress - previousRightRotation);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                imageView2.setRotation(0f);
+                previousRightRotation = seekBarRotate.getProgress();
+                if (viewType == VIEW_TYPE_ZOOM_EACH_IMAGE) {
+                    reloadImageRight();
+                } else {
+                    createBitmap();
+                }
+            }
+        });
+    }
+
+    private void setLayoutRotate() {
+        imgSettings.setVisibility(View.GONE);
+        txtRotateLeft.setVisibility(View.GONE);
+        txtRotateRight.setVisibility(View.GONE);
+        ctRotateControl.setVisibility(View.VISIBLE);
     }
 
     private void reloadImageLeft() {

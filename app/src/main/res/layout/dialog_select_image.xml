@@ -32,7 +32,7 @@
             android:layout_marginRight="6dp"
             android:fontFamily="@font/lato_bold"
             android:padding="10dp"
-            android:text="@string/cancel"
+            android:text="@string/str_cancel"
             android:textColor="@color/blue_dark"
             android:textSize="15sp"
             app:layout_constraintEnd_toEndOf="parent"

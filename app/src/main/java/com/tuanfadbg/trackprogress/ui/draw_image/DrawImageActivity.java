@@ -49,7 +49,7 @@ public class DrawImageActivity extends AppCompatActivity {
 
     String filePath;
 
-    ImageView imgBrush, imgErase, imgText, imgSave;
+    ImageView imgBack, imgBrush, imgErase, imgText, imgSave;
     PhotoEditorView mPhotoEditorView;
     PhotoEditor mPhotoEditor;
     ProgressBar progressBar;
@@ -71,6 +71,7 @@ public class DrawImageActivity extends AppCompatActivity {
         int screenWidth = displayMetrics.widthPixels;
 
         mPhotoEditorView = findViewById(R.id.photoEditorView);
+        imgBack = findViewById(R.id.imageView5);
         imgBrush = findViewById(R.id.imageView6);
         imgErase = findViewById(R.id.imageView7);
         imgText = findViewById(R.id.imageView8);
@@ -142,7 +143,7 @@ public class DrawImageActivity extends AppCompatActivity {
     }
 
     private void setListener() {
-
+        imgBack.setOnClickListener(v -> onBackPressed());
         imgBrush.setOnClickListener(v -> {
             ToolBrushDialog toolBrushDialog = new ToolBrushDialog(this, initColor, brushSize);
             toolBrushDialog.setOnToolBrushListener(new ToolBrushDialog.OnToolBrushListener() {

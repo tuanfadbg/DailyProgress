@@ -21,21 +21,23 @@
 #-renamesourcefileattribute SourceFile
 
 -keep public class * implements com.bumptech.glide.module.GlideModule
--keep public class * extends com.bumptech.glide.module.AppGlideModule
+-keep class * extends com.bumptech.glide.module.AppGlideModule {
+ <init>(...);
+}
 -keep public enum com.bumptech.glide.load.ImageHeaderParser$** {
   **[] $VALUES;
   public *;
 }
+-keep class com.bumptech.glide.load.data.ParcelFileDescriptorRewinder$InternalRewinder {
+  *** rewind();
+}
 
-# for DexGuard only
--keepresourcexmlelements manifest/application/meta-data@value=GlideModule
-
--keep class cn.pedant.** { *; }
+-keep class cn.pedant.SweetAlert** { *; }
 -keep class cn.pedant.SweetAlert.Rotate3dAnimation {
     public <init>(...);
 }
 
--keep class com.tuanfadbg.** { *; }
+-keep class com.tuanfadbg.takephotoutils** { *; }
 
 -dontwarn com.yalantis.ucrop**
 -keep class com.yalantis.ucrop** { *; }

@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -42,7 +43,7 @@ public class NoticeImageExportedCropDialog extends DialogFragment {
     private ImageView imageView;
     private CropImageView cropImageView;
     private TextView txtSave, txtCrop, txtCancel;
-//    private ProgressBar progressBar;
+    private ProgressBar progressBar;
     private File tempFile;
     private boolean loadFromTempFile = false;
     private boolean isSave = false;
@@ -100,7 +101,7 @@ public class NoticeImageExportedCropDialog extends DialogFragment {
         txtSave = view.findViewById(R.id.txt_save);
         txtCrop = view.findViewById(R.id.txt_crop);
         txtCancel = view.findViewById(R.id.txt_delete);
-//        progressBar = view.findViewById(R.id.progressBar);
+        progressBar = view.findViewById(R.id.progressBar);
 
         if (isSave)
             txtSave.setText(R.string.save);
@@ -179,13 +180,13 @@ public class NoticeImageExportedCropDialog extends DialogFragment {
             tempFile = new FileManager(getActivity()).storeImageOnPrivateStorage(resultBitmap);
         }
 
-//        progressBar.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.VISIBLE);
         cropImageView.setVisibility(View.VISIBLE);
         cropImageView.load(Uri.fromFile(tempFile)).execute(new LoadCallback() {
             @Override
             public void onSuccess() {
                 imageView.setVisibility(View.GONE);
-//                progressBar.setVisibility(View.GONE);
+                progressBar.setVisibility(View.GONE);
                 setListenerCrop();
             }
 
@@ -206,7 +207,7 @@ public class NoticeImageExportedCropDialog extends DialogFragment {
             resetButtonListener();
         });
         txtCrop.setOnClickListener(v -> {
-//            progressBar.setVisibility(View.VISIBLE);
+            progressBar.setVisibility(View.VISIBLE);
             cropImageView.crop(Uri.fromFile(tempFile))
                     .execute(new CropCallback() {
                         @Override
@@ -215,7 +216,7 @@ public class NoticeImageExportedCropDialog extends DialogFragment {
                                     .execute(Uri.fromFile(tempFile), new SaveCallback() {
                                         @Override
                                         public void onSuccess(Uri uri) {
-//                                            progressBar.setVisibility(View.GONE);
+                                            progressBar.setVisibility(View.GONE);
                                             cropImageView.setVisibility(View.GONE);
 
                                             imageView.setVisibility(View.VISIBLE);
@@ -231,14 +232,14 @@ public class NoticeImageExportedCropDialog extends DialogFragment {
 
                                         @Override
                                         public void onError(Throwable e) {
-//                                            progressBar.setVisibility(View.GONE);
+                                            progressBar.setVisibility(View.GONE);
                                         }
                                     });
                         }
 
                         @Override
                         public void onError(Throwable e) {
-//                            progressBar.setVisibility(View.GONE);
+                            progressBar.setVisibility(View.GONE);
                         }
                     });
         });

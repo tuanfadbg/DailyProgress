@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-
     <com.ortiz.touchview.TouchImageView
         android:id="@+id/imageView"
         android:layout_width="match_parent"
@@ -72,9 +71,24 @@
             android:padding="18dp"
             android:src="@drawable/ic_edit_2"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/img_crop"
+            app:layout_constraintEnd_toStartOf="@+id/img_rotate"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toEndOf="@+id/img_comment" />
+
+        <ImageView
+            android:id="@+id/img_rotate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:src="@drawable/ic_rotate_right"
+            android:tint="@android:color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/img_crop"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/img_edit"
+
+            tools:layout_editor_absoluteX="143dp"
+            tools:layout_editor_absoluteY="39dp" />
 
         <ImageView
             android:id="@+id/img_crop"
@@ -85,7 +99,7 @@
             app:layout_constraintBottom_toBottomOf="@+id/view3"
             app:layout_constraintEnd_toStartOf="@+id/img_share"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/img_edit" />
+            app:layout_constraintStart_toEndOf="@+id/img_rotate" />
 
         <ImageView
             android:id="@+id/img_comment"
@@ -114,34 +128,147 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="15dp"
-        android:tint="@android:color/white"
         android:src="@drawable/ic_side_by_side"
+        android:tint="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
-        android:id="@+id/img_rotate_left"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="20dp"
-        android:rotation="-60"
-        android:tint="@android:color/white"
-        android:src="@drawable/ic_rotate_left"
-        app:layout_constraintBottom_toBottomOf="@+id/img_rotate_right"
-        app:layout_constraintEnd_toStartOf="@+id/img_rotate_right"
-        app:layout_constraintTop_toTopOf="@+id/img_rotate_right"
-        app:layout_constraintVertical_bias="1.0" />
 
-    <ImageView
-        android:id="@+id/img_rotate_right"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="20dp"
-        android:rotation="60"
-        android:tint="@android:color/white"
-        android:src="@drawable/ic_rotate_right"
-        app:layout_constraintBottom_toBottomOf="@+id/img_compare"
-        app:layout_constraintEnd_toStartOf="@+id/img_compare"
-        app:layout_constraintTop_toTopOf="@+id/img_compare"
-        app:layout_constraintVertical_bias="0.666" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/ct_rotate_control"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <TextView
+            android:id="@+id/textView22"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/lato_regular"
+            android:textColor="@android:color/white"
+            android:text="-180°"
+            android:textSize="11sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView23"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/lato_regular"
+            android:text="180°"
+            android:textColor="@android:color/white"
+            android:textSize="11sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/txt_rotate_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/lato_regular"
+            android:text="0°"
+            android:textColor="@android:color/white"
+            android:textSize="13sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <SeekBar
+            android:id="@+id/seekbar_rotate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="360"
+            android:maxHeight="2dp"
+            android:minHeight="2dp"
+            android:progress="180"
+            android:progressDrawable="@drawable/rotate_seekbar"
+            android:thumbTint="@color/blue"
+            app:layout_constraintTop_toBottomOf="@+id/textView22" />
+
+        <TextView
+            android:id="@+id/txt_rotate_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:drawablePadding="10dp"
+            android:fontFamily="@font/lato_regular"
+            android:gravity="center"
+            android:padding="10dp"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp"
+            android:text="@string/str_cancel"
+            android:textColor="@android:color/white"
+            android:textSize="13sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/txt_rotate_done"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/seekbar_rotate" />
+
+        <TextView
+            android:id="@+id/txt_rotate_done"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/lato_regular"
+            android:gravity="center"
+            android:padding="10dp"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp"
+            android:text="@string/done"
+            android:textColor="@android:color/white"
+            android:textSize="13sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/txt_rotate_cancel"
+            app:layout_constraintTop_toTopOf="@+id/txt_rotate_cancel" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/ct_grid"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <View
+            android:id="@+id/view41"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#c0c0c0"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/view51" />
+
+        <View
+            android:id="@+id/view51"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#c0c0c0"
+            app:layout_constraintEnd_toStartOf="@+id/view41"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <View
+
+            android:id="@+id/view71"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#c0c0c0"
+            app:layout_constraintBottom_toTopOf="@+id/view61"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <View
+
+            android:id="@+id/view61"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#c0c0c0"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/view71" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

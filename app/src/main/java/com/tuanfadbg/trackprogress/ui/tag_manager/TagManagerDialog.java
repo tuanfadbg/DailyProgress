@@ -154,12 +154,7 @@ public class TagManagerDialog extends DialogFragment {
 
     private void getAllItemAndPrepareData() {
         ItemSelectAsyncTask itemSelectAsyncTask = new ItemSelectAsyncTask(getContext());
-        itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, null, new ItemSelectAsyncTask.OnItemSelectedListener() {
-            @Override
-            public void onSelected(List<Item> datas) {
-                prepareDataAndGetAllTag(datas);
-            }
-        }));
+        itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, null, this::prepareDataAndGetAllTag));
     }
 
     private void prepareDataAndGetAllTag(List<Item> datas) {

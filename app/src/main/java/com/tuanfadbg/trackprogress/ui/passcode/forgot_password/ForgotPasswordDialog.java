@@ -2,6 +2,7 @@ package com.tuanfadbg.trackprogress.ui.passcode.forgot_password;
 
 import android.app.Dialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -87,8 +88,8 @@ public class ForgotPasswordDialog extends DialogFragment {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        // response
-//                        Log.d("Response", response);
+//                         response
+//                        Log.e("Response", response);
                         isButtonSendEmailEnable = true;
 
                         imgLock.setVisibility(View.VISIBLE);
@@ -104,6 +105,7 @@ public class ForgotPasswordDialog extends DialogFragment {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+//                        Log.e("Response", "onErrorResponse: " );
                         isButtonSendEmailEnable = true;
                         imgLock.setVisibility(View.VISIBLE);
                         progressBar.setVisibility(View.GONE);

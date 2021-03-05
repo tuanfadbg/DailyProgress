@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -25,6 +26,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.tuanfadbg.takephotoutils.TakePhotoCallback;
+import com.tuanfadbg.takephotoutils.TakePhotoUtils;
 import com.tuanfadbg.trackprogress.beforeafterimage.BuildConfig;
 import com.tuanfadbg.trackprogress.beforeafterimage.R;
 import com.tuanfadbg.trackprogress.database.Data;
@@ -40,14 +43,12 @@ import com.tuanfadbg.trackprogress.ui.import_image.ImportImageDialog;
 import com.tuanfadbg.trackprogress.ui.main_grid.DataGridAdapter;
 import com.tuanfadbg.trackprogress.ui.main_list.TimelineListAdapter;
 import com.tuanfadbg.trackprogress.ui.rate.RateDialog;
+import com.tuanfadbg.trackprogress.ui.select_image_no_tag.SelectImageNoTagDialog;
 import com.tuanfadbg.trackprogress.ui.settings.SettingsDialog;
 import com.tuanfadbg.trackprogress.ui.side_by_side.SideBySideDialog;
 import com.tuanfadbg.trackprogress.utils.FileManager;
-import com.tuanfadbg.trackprogress.utils.Logger;
 import com.tuanfadbg.trackprogress.utils.SharePreferentUtils;
 import com.tuanfadbg.trackprogress.utils.Utils;
-import com.tuanfadbg.trackprogress.utils.takephoto.TakePhotoCallback;
-import com.tuanfadbg.trackprogress.utils.takephoto.TakePhotoUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,17 +64,18 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String NAME = "NAME";
 
-    TextView txtHello;
+//    TextView txtHello;
     ImageView imgGrid, imgList, imgEmpty;
     RecyclerView rcvData;
     ChipGroup chipGroup;
     ConstraintLayout ctStartHere;
+    View ctWarning;
 
     DataGridAdapter dataGridAdapter;
     TimelineListAdapter timelineListAdapter;
     OnPermissionGranted onPermissionGranted;
 
-    com.tuanfadbg.trackprogress.utils.takephoto.TakePhotoUtils takePhotoUtils;
+    TakePhotoUtils takePhotoUtils;
     Integer currentTagSelected = null;
     private List<Item> datas;
     BroadcastReceiver brName;
@@ -83,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Logger.e("resume");
+//        Logger.e("resume");
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
@@ -97,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        txtHello = findViewById(R.id.txt_hello);
+//        txtHello = findViewById(R.id.txt_hello);
 
         imgGrid = findViewById(R.id.img_grid);
         imgList = findViewById(R.id.img_list);
@@ -106,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
         rcvData = findViewById(R.id.rcv_data);
         chipGroup = findViewById(R.id.rcv_tag);
         ctStartHere = findViewById(R.id.ct_start_here);
+        ctWarning = findViewById(R.id.ct_warning);
 
         takePhotoUtils = new TakePhotoUtils(this, BuildConfig.APPLICATION_ID);
 
@@ -123,14 +126,14 @@ public class MainActivity extends AppCompatActivity {
                 getAllTagAndDataInside();
             }
         };
-        brName = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                updateName(intent.getStringExtra(NAME));
-            }
-        };
+//        brName = new BroadcastReceiver() {
+//            @Override
+//            public void onReceive(Context context, Intent intent) {
+//                updateName(intent.getStringExtra(NAME));
+//            }
+//        };
 
-        registerReceiver(brName, new IntentFilter(UPDATE_NAME));
+//        registerReceiver(brName, new IntentFilter(UPDATE_NAME));
         registerReceiver(brTag, new IntentFilter(UPDATE_TAG));
         registerReceiver(brItem, new IntentFilter(UPDATE_ITEM));
         startAnimationStartHere();
@@ -220,9 +223,9 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void setData() {
-        String name = SharePreferentUtils.getName(true);
-        name = String.format(getString(R.string.hello_s) + ", %s", name);
-        txtHello.setText(name);
+//        String name = SharePreferentUtils.getName(true);
+//        name = String.format(getString(R.string.hello_s) + ", %s", name);
+//        txtHello.setText(name);
 
         getAllTagAndDataInside();
 
@@ -312,24 +315,57 @@ public class MainActivity extends AppCompatActivity {
     private void selectTag(Integer tagId) {
         if (tagId == -1)
             tagId = null;
+        flagShowAnimationStartHere = true;
+
         currentTagSelected = tagId;
         ItemSelectAsyncTask itemSelectAsyncTask
                 = new ItemSelectAsyncTask(this);
-        itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, tagId, datas -> {
-            this.datas = datas;
-            if (imgGrid.isSelected()) {
-                dataGridAdapter.setData(datas);
-            } else {
-                timelineListAdapter.setData(datas);
+        Integer finalTagId = tagId;
+
+        itemSelectAsyncTask.execute(new ItemSelectAsyncTask.Data(true, null, mDatas -> {
+            this.datas = new ArrayList<>();
+            for (int i = 0; i < mDatas.size(); i++) {
+                Item item = mDatas.get(i);
+                if (item.tag != null && item.tag.equals(finalTagId))
+                    datas.add(item);
+
+                if (item.tag != null && item.tag.equals(-1)) {
+                    showWarningView();
+                    flagShowAnimationStartHere = false;
+                }
             }
+
+            if (imgGrid.isSelected()) {
+                dataGridAdapter.setData(this.datas);
+            } else {
+                timelineListAdapter.setData(this.datas);
+            }
+
             if (datas.size() > 0) {
                 imgEmpty.setVisibility(View.GONE);
                 hideViewStartHere();
             } else {
                 imgEmpty.setVisibility(View.VISIBLE);
-                startAnimationStartHere();
+                if (flagShowAnimationStartHere)
+                    startAnimationStartHere();
             }
         }));
+    }
+
+    boolean flagShowAnimationStartHere = true;
+
+    private void showWarningView() {
+        if (ctWarning.getVisibility() == View.VISIBLE)
+            return;
+
+        ctWarning.setVisibility(View.VISIBLE);
+        ctWarning.setOnClickListener(v -> {
+            SelectImageNoTagDialog selectImageNoTagDialog = new SelectImageNoTagDialog(() -> {
+                getAllTagAndDataInside();
+                ctWarning.setVisibility(View.GONE);
+            });
+            selectImageNoTagDialog.show(getSupportFragmentManager(), SelectImageNoTagDialog.class.getSimpleName());
+        });
     }
 
     private void startAnimationStartHere() {
@@ -379,7 +415,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onSuccess(Bitmap bitmap, int width, int height, Uri sourceUri, long lastModified) {
+                    public void onSuccess(String path, Bitmap bitmap, int width, int height, Uri sourceUri, long lastModified) {
                         if (isFinishing())
                             return;
 
@@ -410,14 +446,27 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onSuccess(Bitmap bitmap, int width, int height, Uri sourceUri, long lastModified) {
-                ImageNoteDialog imageNoteDialog = new ImageNoteDialog(
-                        bitmap,
-                        currentTagSelected,
-                        (hasNewTag, tagId) -> {
-                            updateNewItem(hasNewTag, tagId);
-                        });
-                imageNoteDialog.show(getSupportFragmentManager(), ImageNoteDialog.class.getSimpleName());
+            public void onSuccess(String path, Bitmap bitmap, int width, int height, Uri sourceUri, long lastModified) {
+//                Log.e(TAG, "onSuccess: path is " + path);
+//                Log.e(TAG, "onSuccess: bitmap is" + (bitmap == null));
+                ImageNoteDialog imageNoteDialog = null;
+                if (path != null)
+                    imageNoteDialog = new ImageNoteDialog(
+                            path,
+                            currentTagSelected,
+                            (hasNewTag, tagId) -> {
+                                updateNewItem(hasNewTag, tagId);
+                            },
+                            true);
+                else if (bitmap != null)
+                    imageNoteDialog = new ImageNoteDialog(
+                            bitmap,
+                            currentTagSelected,
+                            (hasNewTag, tagId) -> {
+                                updateNewItem(hasNewTag, tagId);
+                            });
+                if (imageNoteDialog != null)
+                    imageNoteDialog.show(getSupportFragmentManager(), ImageNoteDialog.class.getSimpleName());
             }
 
             @Override
@@ -434,13 +483,15 @@ public class MainActivity extends AppCompatActivity {
         sweetAlertDialog.setConfirmText(getString(R.string.str_ok));
         sweetAlertDialog.show();
     }
-
+    SweetAlertDialog alertImportSuccess = null;
     public void showAlertImportSuccess() {
-        SweetAlertDialog sweetAlertDialog = new SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE);
-        sweetAlertDialog.setTitle(R.string.import_image);
-        sweetAlertDialog.setContentText(getString(R.string.import_success));
-        sweetAlertDialog.setConfirmText(getString(R.string.str_ok));
-        sweetAlertDialog.show();
+        if (alertImportSuccess != null && alertImportSuccess.isShowing())
+            return;
+        alertImportSuccess = new SweetAlertDialog(this, SweetAlertDialog.SUCCESS_TYPE);
+        alertImportSuccess.setTitle(R.string.import_image);
+        alertImportSuccess.setContentText(getString(R.string.import_success));
+        alertImportSuccess.setConfirmText(getString(R.string.str_ok));
+        alertImportSuccess.show();
     }
 
     @Override
@@ -463,10 +514,10 @@ public class MainActivity extends AppCompatActivity {
         takePhotoUtils.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
-    public void updateName(String name) {
-        name = String.format(getString(R.string.hello_s) + ", %s", name);
-        txtHello.setText(name);
-    }
+//    public void updateName(String name) {
+//        name = String.format(getString(R.string.hello_s) + ", %s", name);
+//        txtHello.setText(name);
+//    }
 
     public TakePhotoUtils getTakePhotoUtils() {
         return takePhotoUtils;
@@ -510,7 +561,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(brName);
+//        unregisterReceiver(brName);
         unregisterReceiver(brTag);
         unregisterReceiver(brItem);
     }

@@ -80,7 +80,6 @@
     <string name="no_data_to_restore">No data to restore</string>
     <string name="start_here">Start here</string>
     <string name="rate_me_5_stars_for_my_effort">Rate me 5 stars for my effort</string>
-
     <string name="rate">Rate</string>
     <string name="please_give_5_star">Please give me a 5-star rating</string>
     <string name="thanks_for_your_feed_back">Thanks for your feedback</string>
@@ -91,9 +90,8 @@
 
     <string name="send_email_forgot_password_fail">Cannot send email. Please try again later.</string>
     <string name="check_spam_folder">Please check in the spam folder if you cannot find the email.</string>
-
     <string name="language">Language</string>
+
     <string name="str_edit">Edit</string>
     <string name="str_cancel">Cancel</string>
-
 </resources>

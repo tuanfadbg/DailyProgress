@@ -17,83 +17,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!--    <androidx.coordinatorlayout.widget.CoordinatorLayout-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="0dp"-->
-    <!--        android:layout_marginTop="8dp"-->
-    <!--        app:layout_constraintBottom_toTopOf="@+id/img_camera"-->
-    <!--        app:layout_constraintTop_toBottomOf="@+id/txt_hello">-->
-
-
-    <!--        <androidx.recyclerview.widget.RecyclerView-->
-    <!--            android:id="@+id/rcv_data"-->
-    <!--            android:layout_width="match_parent"-->
-    <!--            android:layout_height="match_parent"-->
-    <!--            android:layout_marginStart="8dp"-->
-    <!--            android:layout_marginEnd="8dp"-->
-    <!--            android:layout_marginBottom="16dp"-->
-    <!--            android:overScrollMode="never"-->
-    <!--            app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
-    <!--            app:layout_constraintBottom_toTopOf="@+id/img_camera"-->
-    <!--            app:layout_constraintEnd_toEndOf="parent"-->
-    <!--            app:layout_constraintStart_toStartOf="parent"-->
-    <!--            app:layout_constraintTop_toBottomOf="@+id/appbar_layout"-->
-    <!--            app:layout_goneMarginTop="16dp" />-->
-
-
-    <!--        <com.google.android.material.appbar.AppBarLayout-->
-    <!--            android:id="@+id/appbar_layout"-->
-    <!--            android:layout_width="match_parent"-->
-    <!--            android:layout_height="200dp"-->
-    <!--            android:background="@android:color/transparent"-->
-    <!--            app:elevation="0dp">-->
-
-    <!--            <com.google.android.material.appbar.CollapsingToolbarLayout-->
-    <!--                android:layout_width="match_parent"-->
-    <!--                android:layout_height="match_parent"-->
-    <!--                app:expandedTitleGravity="top"-->
-    <!--                app:expandedTitleMarginStart="50dp"-->
-    <!--                app:expandedTitleMarginTop="50dp"-->
-    <!--                app:layout_scrollFlags="scroll|exitUntilCollapsed|snap">-->
-
-    <!--                <LinearLayout-->
-    <!--                    android:layout_width="match_parent"-->
-    <!--                    android:layout_height="wrap_content"-->
-    <!--                    android:orientation="vertical">-->
-
-    <!--                    <HorizontalScrollView-->
-    <!--                        android:id="@+id/horizontal_scroll_view"-->
-    <!--                        android:layout_width="match_parent"-->
-    <!--                        android:layout_height="wrap_content"-->
-    <!--                        android:paddingStart="16dp"-->
-    <!--                        android:paddingEnd="16dp"-->
-    <!--                        android:scrollbars="none"-->
-    <!--                        app:layout_constraintEnd_toEndOf="parent"-->
-    <!--                        app:layout_constraintStart_toStartOf="parent"-->
-    <!--                        app:layout_constraintTop_toBottomOf="@+id/scrollView2">-->
-
-    <!--                        <com.google.android.material.chip.ChipGroup-->
-    <!--                            android:id="@+id/rcv_tag"-->
-    <!--                            android:layout_width="wrap_content"-->
-    <!--                            android:layout_height="wrap_content"-->
-    <!--                            app:singleLine="true"-->
-    <!--                            app:singleSelection="true">-->
-
-    <!--                        </com.google.android.material.chip.ChipGroup>-->
-
-    <!--                    </HorizontalScrollView>-->
-
-    <!--                </LinearLayout>-->
-
-    <!--                <androidx.appcompat.widget.Toolbar-->
-    <!--                    android:id="@+id/AppBar"-->
-    <!--                    android:layout_width="match_parent"-->
-    <!--                    android:layout_height="60dp"-->
-    <!--                    app:layout_collapseMode="pin" />-->
-    <!--            </com.google.android.material.appbar.CollapsingToolbarLayout>-->
-
-    <!--        </com.google.android.material.appbar.AppBarLayout>-->
-    <!--    </androidx.coordinatorlayout.widget.CoordinatorLayout>-->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rcv_data"
         android:layout_width="match_parent"
@@ -246,6 +169,54 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/ct_warning"
+        android:layout_width="0dp"
+        android:visibility="gone"
+        android:layout_height="wrap_content"
+        android:background="#B7FFB03B"
+        app:layout_constraintBottom_toBottomOf="@+id/rcv_data"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/lato_bold"
+            android:text="@string/photo_no_tag"
+            android:textColor="@android:color/white"
+            android:textSize="15sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/txt_view"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/txt_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/lato_bold"
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="10dp"
+            android:text="@string/view_image"
+            android:textColor="@android:color/white"
+            android:textSize="15sp"
+
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 

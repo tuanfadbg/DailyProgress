@@ -3,7 +3,9 @@ package com.tuanfadbg.trackprogress.ui.image_note;
 import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,10 +31,12 @@ import com.tuanfadbg.trackprogress.database.tag.Tag;
 import com.tuanfadbg.trackprogress.database.tag.TagSelectAllAsyncTask;
 import com.tuanfadbg.trackprogress.ui.MainActivity;
 import com.tuanfadbg.trackprogress.ui.add_tag.AddTagDialog;
+import com.tuanfadbg.trackprogress.ui.image_view.ImageViewDialog;
 import com.tuanfadbg.trackprogress.utils.CameraTransformation;
 import com.tuanfadbg.trackprogress.utils.FileManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -48,6 +52,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 public class ImageNoteDialog extends DialogFragment {
 
     private static final String TAG = ImageNoteDialog.class.getSimpleName();
+    private String sourcePath;
     private Bitmap bitmap;
     private ImageView imageView;
     private ChipGroup chipGroup;
@@ -60,11 +65,19 @@ public class ImageNoteDialog extends DialogFragment {
     private long lastModified = 0;
     private Item item;
     private OnItemEditedListener onItemEditedListener;
+    private boolean deletePathIfNotSave = false;
 
     public ImageNoteDialog(Bitmap bitmap, int currentTagId, OnAddNewItemListener onAddNewItemListener) {
         this.bitmap = bitmap;
         this.currentTagId = currentTagId;
         this.onAddNewItemListener = onAddNewItemListener;
+    }
+
+    public ImageNoteDialog(String sourcePath, int currentTagId, OnAddNewItemListener onAddNewItemListener, boolean deletePathIfNotSave) {
+        this.sourcePath = sourcePath;
+        this.currentTagId = currentTagId;
+        this.onAddNewItemListener = onAddNewItemListener;
+        this.deletePathIfNotSave = deletePathIfNotSave;
     }
 
     public ImageNoteDialog(ArrayList<Uri> multiImageSelected, int currentTagId, OnAddNewItemListener onAddNewItemListener) {
@@ -110,10 +123,13 @@ public class ImageNoteDialog extends DialogFragment {
         imageView = view.findViewById(R.id.imageView);
         edtNote = view.findViewById(R.id.edt_note);
         chipGroup = view.findViewById(R.id.chip_group);
-//        txtAddTag = view.findViewById(R.id.txt_add_tag);
         txtMoreImage = view.findViewById(R.id.txt_more_image);
 
-        if (bitmap != null) {
+        if (sourcePath != null) {
+            Glide.with(this)
+                    .load(sourcePath)
+                    .into(imageView);
+        } else if (bitmap != null) {
 //            imageView.setImageBitmap(bitmap);
             Glide.with(this)
                     .load(bitmap)
@@ -145,8 +161,10 @@ public class ImageNoteDialog extends DialogFragment {
         view.findViewById(R.id.txt_see_more).setOnClickListener(v -> addTag());
         view.findViewById(R.id.txt_save).setOnClickListener(v -> save());
         view.findViewById(R.id.txt_delete).setOnClickListener(v -> dismiss());
-        view.findViewById(R.id.constraintLayout).setOnClickListener(v -> {});
-        view.findViewById(R.id.imageView).setOnClickListener(v -> {});
+        view.findViewById(R.id.constraintLayout).setOnClickListener(v -> {
+        });
+        view.findViewById(R.id.imageView).setOnClickListener(v -> {
+        });
         view.setOnClickListener(v -> dismiss());
     }
 
@@ -159,7 +177,7 @@ public class ImageNoteDialog extends DialogFragment {
             while (chipGroup.getChildCount() > 1)
                 chipGroup.removeView(chipGroup.getChildAt(0));
 
-            // find current tag and put it on position 0
+
             for (int i = 0; i < tags.size(); i++) {
                 if (tags.get(i).uid == currentTagId) {
                     Chip chip = new Chip(getContext(), null, R.attr.CustomChipChoiceStyle);
@@ -211,7 +229,9 @@ public class ImageNoteDialog extends DialogFragment {
     }
 
     private void save() {
-        if (bitmap != null)
+        if (sourcePath != null) {
+            copyFileAndSaveToInternalStorage(sourcePath);
+        } else if (bitmap != null)
             saveToInternalStorage(bitmap);
         else if (multiImageSelected != null) {
             Observable.fromArray(multiImageSelected)
@@ -250,6 +270,47 @@ public class ImageNoteDialog extends DialogFragment {
         }
     }
 
+    private void copyFileAndSaveToInternalStorage(String sourcePath) {
+        FileManager fileManager = new FileManager(getActivity());
+        File source = new File(sourcePath);
+        File dest = fileManager.getNewFileInPrivateStorage();
+
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    fileManager.copyFileUsingStream(source, dest);
+                    if (deletePathIfNotSave)
+                        source.delete();
+                    ItemInsertAsyncTask itemInsertAsyncTask = new ItemInsertAsyncTask(getContext());
+                    int tagId = chipGroup.getCheckedChipId();
+                    if (tagId == View.NO_ID)
+                        tagId = chipGroup.getChildAt(0).getId();
+                    Item item = new Item(edtNote.getText().toString().trim()
+                            , dest.getPath(), tagId, true, lastModified);
+
+                    int finalTagId = tagId;
+                    itemInsertAsyncTask.execute(new Data(item, new OnUpdateDatabase() {
+                        @Override
+                        public void onSuccess() {
+                            if (onAddNewItemListener != null)
+                                onAddNewItemListener.onNewItem(hasNewTag, finalTagId);
+                            dismiss();
+                        }
+
+                        @Override
+                        public void onFail() {
+                            Toast.makeText(getContext(), R.string.unknown_error, Toast.LENGTH_LONG).show();
+                        }
+                    }));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+    }
+
 
     private void saveToInternalStorage(Uri uri, long lastModified) {
         FileManager fileManager = new FileManager(getActivity());
@@ -262,12 +323,13 @@ public class ImageNoteDialog extends DialogFragment {
         Item item = new Item(edtNote.getText().toString().trim()
                 , mypath, tagId, true, lastModified);
 
+        int finalTagId = tagId;
         itemInsertAsyncTask.execute(new Data(item, new OnUpdateDatabase() {
             @Override
             public void onSuccess() {
-//                if (onAddNewItemListener != null)
-//                    onAddNewItemListener.onNewItem(hasNewTag, finalTagId);
-//                dismiss();
+                if (onAddNewItemListener != null)
+                    onAddNewItemListener.onNewItem(hasNewTag, finalTagId);
+                dismiss();
             }
 
             @Override
